@@ -14,8 +14,10 @@ ecl = load("ecl")
 STABLE_SENSORS = {
     "outdoor_temperature",
     "flow_temperature",
-    "return_temperature",
+    "primary_return_temperature",
     "dhw_tank_temperature",
+    "room_temperature",
+    "dhw_tank_bottom_temperature",
     *(f"input_s{n}" for n in (2, 4, 7, 8, 9, 10)),
     "flow_target",
     "dhw_target",

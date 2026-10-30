@@ -40,11 +40,17 @@
       "flow_temperature": {
         "name": "Heating flow (S3)"
       },
-      "return_temperature": {
-        "name": "Heating return (S5)"
+      "primary_return_temperature": {
+        "name": "Primary return (S5)"
       },
       "dhw_tank_temperature": {
-        "name": "Hot water tank (S6)"
+        "name": "Hot water tank top (S6)"
+      },
+      "room_temperature": {
+        "name": "Room temperature (S2)"
+      },
+      "dhw_tank_bottom_temperature": {
+        "name": "Hot water tank bottom (S8)"
       },
       "input_s2": {
         "name": "Input S2"

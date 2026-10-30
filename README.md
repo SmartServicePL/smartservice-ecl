@@ -40,8 +40,8 @@ regulatora (rozpoznaje go po numerze seryjnym).
 
 | Encja | Skąd (parametr Danfoss) |
 |---|---|
-| Temperatura zewnętrzna (S1), Zasilanie obiegu (S3), Powrót obiegu (S5), Zasobnik c.w.u. (S6) | wejścia S, ×0,01 °C |
-| Wejścia S2, S4, S7–S10 | domyślnie wyłączone (rola zależy od instalacji) |
+| Temperatura zewnętrzna (S1), Temperatura pokojowa (S2), Zasilanie obiegu (S3), Powrót strony pierwotnej (S5), Zasobnik c.w.u. góra (S6) i dół (S8) | wejścia S, ×0,01 °C (A237.1) |
+| Pozostałe wejścia (A237.1: S4, S7, S9, S10; A237.2: także S2 i S8) | domyślnie wyłączone (rola zależy od instalacji) |
 | Zadana zasilania obiegu, Zadana c.w.u. | 11253, 12256 |
 | Nastawy pokojowe i c.w.u. (komfort, oszczędna) | 11180–11181, 12190–12191 |
 | Krzywa: zasilanie przy −30, −15, −5, 0, 5 i 15 °C | 11400–11405 |
@@ -54,7 +54,11 @@ regulatora (rozpoznaje go po numerze seryjnym).
   w dzienniku i w diagnostyce.
 - Parametr, którego regulator nie ma (wyjątek Modbus 02), też jest niedostępny. Integracja nie pyta o niego w każdym cyklu.
 - Odczyt co 30 s (jedno połączenie, regulator zamyka bezczynne po ok. 75 s). Nastawy i krzywa są czytane raz na godzinę.
-- **Role S3, S5 i S6 sprawdź z „Przeglądem wejść” na wyświetlaczu regulatora.** Instalacja może być podłączona inaczej.
+- **S5 to powrót strony pierwotnej** (sieci ciepłowniczej, przy zaworze M1), a nie powrót z grzejników. Ograniczenie
+  powrotu regulatora działa na tej temperaturze.
+- **Role czujników sprawdź z „Przeglądem wejść” na wyświetlaczu regulatora.** Instalacja może być podłączona inaczej.
+- Przekaźniki i triaki mają neutralne nazwy (Przekaźnik 1…6, Triak 1…6). Opis komunikacji Danfoss odsyła po ich
+  przypisanie do pomp P1–P3 i zaworu M1 do opisu aplikacji, a tego nie dało się potwierdzić z tekstu.
 
 ## MIGIELS
 

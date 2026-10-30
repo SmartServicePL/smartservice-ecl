@@ -68,14 +68,27 @@ class Application:
     dhw: bool = True
 
 
+# A237 (installation guide 087H3806 and the "A237_1 ex. a" diagram of a
+# controller in service, 30.10): S3 is the flow of circuit 1 after the heat
+# exchanger, S5 the return of the PRIMARY side at the control valve M1 (the
+# district network's return the return limit acts on) - not the radiators'
+# return. A237.1 uses six inputs (the guide's table): S1, S2 (room), S3, S5,
+# S6 (tank top) and S8 (tank bottom / charging).
 A237_ROLES = {
     1: "outdoor_temperature",
     3: "flow_temperature",
-    5: "return_temperature",
+    5: "primary_return_temperature",
     6: "dhw_tank_temperature",
 }
+A237_1_ROLES = {
+    **A237_ROLES,
+    2: "room_temperature",
+    8: "dhw_tank_bottom_temperature",
+}
 APPLICATIONS: Mapping[tuple[str, int, int], Application] = {
-    ("A", 237, 1): Application("A237.1", A237_ROLES),
+    ("A", 237, 1): Application("A237.1", A237_1_ROLES),
+    # A237.2 (seven inputs): only the roles common with A237.1 until a diagram
+    # of A237.2 is seen; its other inputs stay "Wejście Sn", disabled.
     ("A", 237, 2): Application("A237.2", A237_ROLES),
 }
 

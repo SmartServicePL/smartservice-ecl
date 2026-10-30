@@ -55,7 +55,7 @@ async def test_add_a237_and_read_only(hass: HomeAssistant, fake: FakeEcl) -> Non
 
     assert state("sensor", "outdoor_temperature") == "-3.5"
     assert state("sensor", "flow_temperature") == "52.3"
-    assert state("sensor", "return_temperature") == "38.1"
+    assert state("sensor", "primary_return_temperature") == "38.1"
     assert state("sensor", "dhw_tank_temperature") == "54.2"
     assert state("sensor", "flow_target") == "52.0"
     assert state("sensor", "dhw_target") == "55.0"
@@ -69,9 +69,13 @@ async def test_add_a237_and_read_only(hass: HomeAssistant, fake: FakeEcl) -> Non
     assert state("binary_sensor", "return_limit_active") == "on"
     assert state("binary_sensor", "manual_mode") == "off"
     assert state("binary_sensor", "alarm") == "off"
-    # Inputs without a sure role are disabled by default; no heat meter.
+    # A237.1: S2 the room, S8 the tank bottom - both enabled (here no sensor:
+    # 192.00 °C, unavailable); S4, S7 without a role are disabled by default.
     registry = er.async_get(hass)
-    assert registry.async_get(entity(hass, "sensor", "input_s2")).disabled_by is not None
+    assert registry.async_get(entity(hass, "sensor", "room_temperature")).disabled_by is None
+    assert hass.states.get(entity(hass, "sensor", "dhw_tank_bottom_temperature")).state == STATE_UNAVAILABLE
+    assert registry.async_get(entity(hass, "sensor", "input_s4")).disabled_by is not None
+    assert registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_input_s2") is None
     assert registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_meter_power") is None
     # Read only: every request was a read (0x04 or 0x03).
     assert {function for _t, _u, function, _a in fake.requests} <= {0x03, 0x04}

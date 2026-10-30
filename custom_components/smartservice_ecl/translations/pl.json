@@ -40,11 +40,17 @@
       "flow_temperature": {
         "name": "Zasilanie obiegu (S3)"
       },
-      "return_temperature": {
-        "name": "Powrót obiegu (S5)"
+      "primary_return_temperature": {
+        "name": "Powrót strony pierwotnej (S5)"
       },
       "dhw_tank_temperature": {
-        "name": "Zasobnik c.w.u. (S6)"
+        "name": "Zasobnik c.w.u. góra (S6)"
+      },
+      "room_temperature": {
+        "name": "Temperatura pokojowa (S2)"
+      },
+      "dhw_tank_bottom_temperature": {
+        "name": "Zasobnik c.w.u. dół (S8)"
       },
       "input_s2": {
         "name": "Wejście S2"

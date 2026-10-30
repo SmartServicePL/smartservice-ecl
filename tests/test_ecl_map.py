@@ -106,3 +106,21 @@ def test_the_lists_hold_every_read_parameter_once() -> None:
     assert {10201, 10210, 11253, 12256, 4220, 1024, 1025, 4011, 6015} <= set(fast)
     assert {11400, 11405, 12190, 6000, 6001} <= set(slow)
     assert 6010 not in ecl.fast_pnus(meter=False)
+
+
+def test_the_roles_of_a237() -> None:
+    """A237.1: six inputs - S5 is the primary return (at the valve M1), not
+    the radiators' return; A237.2 keeps the roles common with A237.1."""
+
+    one = ecl.APPLICATIONS[("A", 237, 1)].roles
+    assert one == {
+        1: "outdoor_temperature",
+        2: "room_temperature",
+        3: "flow_temperature",
+        5: "primary_return_temperature",
+        6: "dhw_tank_temperature",
+        8: "dhw_tank_bottom_temperature",
+    }
+    two = ecl.APPLICATIONS[("A", 237, 2)].roles
+    assert set(two) == {1, 3, 5, 6}
+    assert "return_temperature" not in {*one.values(), *two.values()}
