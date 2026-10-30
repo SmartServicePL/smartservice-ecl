@@ -1,0 +1,224 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Danfoss ECL Comfort",
+        "description": "Read-only connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. Nothing in the controller is changed.",
+        "data": {
+          "host": "IP address of the controller",
+          "port": "Port",
+          "unit": "Modbus address (1, or 254 for the service address)"
+        }
+      },
+      "reconfigure": {
+        "title": "Change the controller's address",
+        "description": "Read-only connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. Nothing in the controller is changed.",
+        "data": {
+          "host": "IP address of the controller",
+          "port": "Port",
+          "unit": "Modbus address (1, or 254 for the service address)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the controller. Check the IP address, the cable and that no other system holds the Modbus connection.",
+      "not_ecl": "The device answered but is not an ECL Comfort with a readable application key.",
+      "unsupported": "Application key {key} is not supported yet.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This controller is already added.",
+      "another_controller": "This address belongs to another controller.",
+      "reconfigure_successful": "The controller's address has been changed."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "outdoor_temperature": {
+        "name": "Outdoor temperature (S1)"
+      },
+      "flow_temperature": {
+        "name": "Heating flow (S3)"
+      },
+      "return_temperature": {
+        "name": "Heating return (S5)"
+      },
+      "dhw_tank_temperature": {
+        "name": "Hot water tank (S6)"
+      },
+      "input_s2": {
+        "name": "Input S2"
+      },
+      "input_s4": {
+        "name": "Input S4"
+      },
+      "input_s7": {
+        "name": "Input S7"
+      },
+      "input_s8": {
+        "name": "Input S8"
+      },
+      "input_s9": {
+        "name": "Input S9"
+      },
+      "input_s10": {
+        "name": "Input S10"
+      },
+      "flow_target": {
+        "name": "Heating flow target"
+      },
+      "dhw_target": {
+        "name": "Hot water target"
+      },
+      "room_comfort_setpoint": {
+        "name": "Room comfort setpoint"
+      },
+      "room_saving_setpoint": {
+        "name": "Room saving setpoint"
+      },
+      "dhw_comfort_setpoint": {
+        "name": "Hot water comfort setpoint"
+      },
+      "dhw_saving_setpoint": {
+        "name": "Hot water saving setpoint"
+      },
+      "curve_m30": {
+        "name": "Heat curve: flow at −30 °C"
+      },
+      "curve_m15": {
+        "name": "Heat curve: flow at −15 °C"
+      },
+      "curve_m5": {
+        "name": "Heat curve: flow at −5 °C"
+      },
+      "curve_0": {
+        "name": "Heat curve: flow at 0 °C"
+      },
+      "curve_p5": {
+        "name": "Heat curve: flow at 5 °C"
+      },
+      "curve_p15": {
+        "name": "Heat curve: flow at 15 °C"
+      },
+      "flow_min": {
+        "name": "Flow minimum"
+      },
+      "flow_max": {
+        "name": "Flow maximum"
+      },
+      "curve_slope": {
+        "name": "Heat curve slope (Danfoss)"
+      },
+      "heating_mode": {
+        "name": "Heating mode",
+        "state": {
+          "manual": "Manual",
+          "scheduled": "Scheduled",
+          "comfort": "Constant comfort",
+          "saving": "Constant saving",
+          "frost_protection": "Frost protection / standby",
+          "cooling": "Cooling"
+        }
+      },
+      "heating_status": {
+        "name": "Heating status",
+        "state": {
+          "saving": "Saving",
+          "pre_comfort": "Pre-comfort",
+          "comfort": "Comfort",
+          "pre_saving": "Pre-saving",
+          "holiday_comfort": "Holiday: constant comfort",
+          "holiday_comfort_7_23": "Holiday: comfort 7-23",
+          "holiday_saving": "Holiday: constant saving",
+          "holiday_frost_protection": "Holiday: frost protection"
+        }
+      },
+      "dhw_mode": {
+        "name": "Hot water mode",
+        "state": {
+          "manual": "Manual",
+          "scheduled": "Scheduled",
+          "comfort": "Constant comfort",
+          "saving": "Constant saving",
+          "frost_protection": "Frost protection / standby",
+          "cooling": "Cooling"
+        }
+      },
+      "dhw_status": {
+        "name": "Hot water status",
+        "state": {
+          "saving": "Saving",
+          "pre_comfort": "Pre-comfort",
+          "comfort": "Comfort",
+          "pre_saving": "Pre-saving",
+          "holiday_comfort": "Holiday: constant comfort",
+          "holiday_comfort_7_23": "Holiday: comfort 7-23",
+          "holiday_saving": "Holiday: constant saving",
+          "holiday_frost_protection": "Holiday: frost protection"
+        }
+      },
+      "meter_flow_temperature": {
+        "name": "Heat meter flow"
+      },
+      "meter_return_temperature": {
+        "name": "Heat meter return"
+      },
+      "meter_power": {
+        "name": "Heat meter power"
+      },
+      "meter_energy": {
+        "name": "Heat meter energy"
+      }
+    },
+    "binary_sensor": {
+      "return_limit_active": {
+        "name": "Return limit active"
+      },
+      "manual_mode": {
+        "name": "Manual mode"
+      },
+      "alarm": {
+        "name": "Alarm"
+      },
+      "sensor_error": {
+        "name": "Sensor error"
+      },
+      "relay_1": {
+        "name": "Relay 1"
+      },
+      "relay_2": {
+        "name": "Relay 2"
+      },
+      "relay_3": {
+        "name": "Relay 3"
+      },
+      "relay_4": {
+        "name": "Relay 4"
+      },
+      "relay_5": {
+        "name": "Relay 5"
+      },
+      "relay_6": {
+        "name": "Relay 6"
+      },
+      "triac_1": {
+        "name": "Triac 1"
+      },
+      "triac_2": {
+        "name": "Triac 2"
+      },
+      "triac_3": {
+        "name": "Triac 3"
+      },
+      "triac_4": {
+        "name": "Triac 4"
+      },
+      "triac_5": {
+        "name": "Triac 5"
+      },
+      "triac_6": {
+        "name": "Triac 6"
+      }
+    }
+  }
+}

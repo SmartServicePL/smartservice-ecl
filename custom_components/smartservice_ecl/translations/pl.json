@@ -1,0 +1,224 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Danfoss ECL Comfort",
+        "description": "Połączenie tylko do odczytu przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja niczego w regulatorze nie zmienia.",
+        "data": {
+          "host": "Adres IP regulatora",
+          "port": "Port",
+          "unit": "Adres Modbus (1 albo 254 — adres serwisowy)"
+        }
+      },
+      "reconfigure": {
+        "title": "Zmiana adresu regulatora",
+        "description": "Połączenie tylko do odczytu przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja niczego w regulatorze nie zmienia.",
+        "data": {
+          "host": "Adres IP regulatora",
+          "port": "Port",
+          "unit": "Adres Modbus (1 albo 254 — adres serwisowy)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nie można połączyć się z regulatorem. Sprawdź adres IP, kabel i czy żaden inny system nie trzyma połączenia Modbus.",
+      "not_ecl": "Urządzenie odpowiedziało, ale nie jest regulatorem ECL Comfort z czytelnym kluczem aplikacji.",
+      "unsupported": "Klucz aplikacji {key} nie jest jeszcze obsługiwany.",
+      "unknown": "Nieoczekiwany błąd."
+    },
+    "abort": {
+      "already_configured": "Ten regulator jest już dodany.",
+      "another_controller": "Pod tym adresem jest inny regulator.",
+      "reconfigure_successful": "Adres regulatora został zmieniony."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "outdoor_temperature": {
+        "name": "Temperatura zewnętrzna (S1)"
+      },
+      "flow_temperature": {
+        "name": "Zasilanie obiegu (S3)"
+      },
+      "return_temperature": {
+        "name": "Powrót obiegu (S5)"
+      },
+      "dhw_tank_temperature": {
+        "name": "Zasobnik c.w.u. (S6)"
+      },
+      "input_s2": {
+        "name": "Wejście S2"
+      },
+      "input_s4": {
+        "name": "Wejście S4"
+      },
+      "input_s7": {
+        "name": "Wejście S7"
+      },
+      "input_s8": {
+        "name": "Wejście S8"
+      },
+      "input_s9": {
+        "name": "Wejście S9"
+      },
+      "input_s10": {
+        "name": "Wejście S10"
+      },
+      "flow_target": {
+        "name": "Zadana zasilania obiegu"
+      },
+      "dhw_target": {
+        "name": "Zadana c.w.u."
+      },
+      "room_comfort_setpoint": {
+        "name": "Nastawa pokojowa komfort"
+      },
+      "room_saving_setpoint": {
+        "name": "Nastawa pokojowa oszczędna"
+      },
+      "dhw_comfort_setpoint": {
+        "name": "Nastawa c.w.u. komfort"
+      },
+      "dhw_saving_setpoint": {
+        "name": "Nastawa c.w.u. oszczędna"
+      },
+      "curve_m30": {
+        "name": "Krzywa: zasilanie przy −30 °C"
+      },
+      "curve_m15": {
+        "name": "Krzywa: zasilanie przy −15 °C"
+      },
+      "curve_m5": {
+        "name": "Krzywa: zasilanie przy −5 °C"
+      },
+      "curve_0": {
+        "name": "Krzywa: zasilanie przy 0 °C"
+      },
+      "curve_p5": {
+        "name": "Krzywa: zasilanie przy 5 °C"
+      },
+      "curve_p15": {
+        "name": "Krzywa: zasilanie przy 15 °C"
+      },
+      "flow_min": {
+        "name": "Zasilanie minimalne"
+      },
+      "flow_max": {
+        "name": "Zasilanie maksymalne"
+      },
+      "curve_slope": {
+        "name": "Nachylenie krzywej (Danfoss)"
+      },
+      "heating_mode": {
+        "name": "Tryb ogrzewania",
+        "state": {
+          "manual": "Ręczny",
+          "scheduled": "Według harmonogramu",
+          "comfort": "Stały komfort",
+          "saving": "Stała oszczędność",
+          "frost_protection": "Ochrona przed zamarzaniem / czuwanie",
+          "cooling": "Chłodzenie"
+        }
+      },
+      "heating_status": {
+        "name": "Status ogrzewania",
+        "state": {
+          "saving": "Oszczędność",
+          "pre_comfort": "Przed komfortem",
+          "comfort": "Komfort",
+          "pre_saving": "Przed oszczędnością",
+          "holiday_comfort": "Urlop: stały komfort",
+          "holiday_comfort_7_23": "Urlop: komfort 7–23",
+          "holiday_saving": "Urlop: stała oszczędność",
+          "holiday_frost_protection": "Urlop: ochrona przed zamarzaniem"
+        }
+      },
+      "dhw_mode": {
+        "name": "Tryb c.w.u.",
+        "state": {
+          "manual": "Ręczny",
+          "scheduled": "Według harmonogramu",
+          "comfort": "Stały komfort",
+          "saving": "Stała oszczędność",
+          "frost_protection": "Ochrona przed zamarzaniem / czuwanie",
+          "cooling": "Chłodzenie"
+        }
+      },
+      "dhw_status": {
+        "name": "Status c.w.u.",
+        "state": {
+          "saving": "Oszczędność",
+          "pre_comfort": "Przed komfortem",
+          "comfort": "Komfort",
+          "pre_saving": "Przed oszczędnością",
+          "holiday_comfort": "Urlop: stały komfort",
+          "holiday_comfort_7_23": "Urlop: komfort 7–23",
+          "holiday_saving": "Urlop: stała oszczędność",
+          "holiday_frost_protection": "Urlop: ochrona przed zamarzaniem"
+        }
+      },
+      "meter_flow_temperature": {
+        "name": "Licznik ciepła: zasilanie"
+      },
+      "meter_return_temperature": {
+        "name": "Licznik ciepła: powrót"
+      },
+      "meter_power": {
+        "name": "Licznik ciepła: moc"
+      },
+      "meter_energy": {
+        "name": "Licznik ciepła: energia"
+      }
+    },
+    "binary_sensor": {
+      "return_limit_active": {
+        "name": "Ograniczenie powrotu działa"
+      },
+      "manual_mode": {
+        "name": "Tryb ręczny"
+      },
+      "alarm": {
+        "name": "Alarm"
+      },
+      "sensor_error": {
+        "name": "Błąd czujnika"
+      },
+      "relay_1": {
+        "name": "Przekaźnik 1"
+      },
+      "relay_2": {
+        "name": "Przekaźnik 2"
+      },
+      "relay_3": {
+        "name": "Przekaźnik 3"
+      },
+      "relay_4": {
+        "name": "Przekaźnik 4"
+      },
+      "relay_5": {
+        "name": "Przekaźnik 5"
+      },
+      "relay_6": {
+        "name": "Przekaźnik 6"
+      },
+      "triac_1": {
+        "name": "Triak 1"
+      },
+      "triac_2": {
+        "name": "Triak 2"
+      },
+      "triac_3": {
+        "name": "Triak 3"
+      },
+      "triac_4": {
+        "name": "Triak 4"
+      },
+      "triac_5": {
+        "name": "Triak 5"
+      },
+      "triac_6": {
+        "name": "Triak 6"
+      }
+    }
+  }
+}
