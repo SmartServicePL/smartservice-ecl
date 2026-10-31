@@ -17,6 +17,9 @@ from tests.pure import load
 
 modbus = load("modbus")
 
+# The fake ECL listens on 127.0.0.1 (conftest.fake_ecl_tcp).
+pytestmark = pytest.mark.usefixtures("fake_ecl_tcp")
+
 
 def run(test: Callable[[], Awaitable[Any]]) -> Any:
     return asyncio.run(test())

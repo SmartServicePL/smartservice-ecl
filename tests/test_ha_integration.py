@@ -18,8 +18,12 @@ from custom_components.smartservice_ecl.const import CONF_UNIT, DOMAIN
 SERIAL = "11009763"
 
 
+# The fake ECL listens on 127.0.0.1 (conftest.fake_ecl_tcp).
+pytestmark = pytest.mark.usefixtures("fake_ecl_tcp")
+
+
 @pytest.fixture
-async def fake() -> FakeEcl:
+async def fake(fake_ecl_tcp: None) -> FakeEcl:
     server = await FakeEcl(registers=a237_registers()).start()
     yield server
     await server.stop()

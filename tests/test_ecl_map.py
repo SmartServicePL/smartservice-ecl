@@ -14,6 +14,9 @@ ecl = load("ecl")
 modbus = load("modbus")
 reader_module = load("reader")
 
+# The fake ECL listens on 127.0.0.1 (conftest.fake_ecl_tcp).
+pytestmark = pytest.mark.usefixtures("fake_ecl_tcp")
+
 
 def test_temperatures_disconnected_and_negative() -> None:
     assert ecl.temperature(2144) == ecl.Value(21.44)  # Danfoss 7.5: S2 21.44 °C
