@@ -97,6 +97,20 @@ APPLICATIONS: Mapping[tuple[str, int, int], Application] = {
 }
 
 
+# p. 25: PNU 19, the code number (prefix 087H) - one number for ECL Comfort
+# 296 AND 310 (087H3040 / 3044), so "296/310" is all it says for them.
+MODEL_BY_CODE: Mapping[int, str] = {
+    3020: "210",
+    3024: "210",
+    3030: "210B",
+    3034: "210B",
+    3040: "296/310",
+    3044: "296/310",
+    3050: "310B",
+    3054: "310B",
+}
+
+
 @dataclass(frozen=True, slots=True)
 class Identity:
     prefix: str
@@ -105,10 +119,23 @@ class Identity:
     version: str
     software: str
     serial: int
+    # 0.1.2: the code number (PNU 19), None when the controller has none.
+    code: int | None = None
 
     @property
     def key(self) -> str:
         return f"{self.prefix}{self.number}.{self.sub}"
+
+    @property
+    def model_short(self) -> str | None:
+        """The model the code number names for sure ("296/310", "310B"…)."""
+
+        return MODEL_BY_CODE.get(self.code) if self.code is not None else None
+
+    @property
+    def model(self) -> str:
+        short = self.model_short
+        return f"ECL Comfort {short}" if short else "ECL Comfort"
 
     @property
     def application(self) -> Application | None:
@@ -132,7 +159,19 @@ def identity_from(registers: Mapping[int, int]) -> Identity:
         version=version_text(registers[PNU_APP_VERSION]),
         software=version_text(registers[PNU_SOFTWARE]),
         serial=(registers[PNU_SERIAL_HIGH] << 16) | registers[PNU_SERIAL_LOW],
+        code=registers.get(PNU_SALES_NUMBER),
     )
+
+
+# Operator 31.10: the entry's title - "ECL 296/310 - A237.1"; without a sure
+# model "ECL - A237.1". The title of 0.1.0/0.1.1 was "ECL A237.1".
+def entry_title(identity: Identity) -> str:
+    short = identity.model_short
+    return f"ECL {short} - {identity.key}" if short else f"ECL - {identity.key}"
+
+
+def old_entry_title(identity: Identity) -> str:
+    return f"ECL {identity.key}"
 
 
 IDENTITY_PNUS = (

@@ -12,7 +12,7 @@ from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import ecl
-from .const import DOMAIN, MANUFACTURER, MODEL
+from .const import DEVICE_NAME, DOMAIN, MANUFACTURER
 from .coordinator import EclCoordinator, EclData
 
 
@@ -37,11 +37,13 @@ class EclEntity(CoordinatorEntity[EclCoordinator]):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, str(identity.serial))},
             manufacturer=MANUFACTURER,
-            model=f"{MODEL} ({identity.key})",
+            model=identity.model,
             sw_version=identity.software,
             hw_version=f"{identity.key} v{identity.version}",
             serial_number=str(identity.serial),
-            name=f"Regulator ECL {identity.key}",
+            # Operator 31.10: the device is "Danfoss ECL310" (its entities keep
+            # their entity_id - the registry holds it by unique_id).
+            name=DEVICE_NAME,
         )
 
     def _reading(self) -> ecl.Value:

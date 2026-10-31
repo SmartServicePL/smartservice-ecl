@@ -1,5 +1,13 @@
 # Zmiany
 
+## 0.1.2
+
+- Integracja i urządzenie nazywają się „Danfoss ECL310”. Model urządzenia z numeru katalogowego regulatora
+  (np. „ECL Comfort 296/310” — Danfoss ma jeden numer dla 296 i 310).
+- Tytuł wpisu: „ECL 296/310 - A237.1” (bez odczytu modelu „ECL - A237.1”). Wpis z dawnym tytułem „ECL A237.1”
+  dostaje nowy tytuł sam; tytuł zmieniony ręcznie zostaje.
+- Identyfikatory encji bez zmian — historia, automatyzacje i entity_id zostają.
+
 ## 0.1.1
 
 - Nazwy encji jak w ECL Portal Danfoss: obieg 1 (HC1) i obieg 2 (c.w.u.), z numerem wejścia, np. „Temperatura

@@ -66,7 +66,7 @@ class EclConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(str(identity.serial))
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=f"ECL {identity.key}",
+                    title=ecl.entry_title(identity),
                     data={**user_input, CONF_HOST: user_input[CONF_HOST].strip()},
                 )
             errors["base"] = error or "unknown"

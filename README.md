@@ -1,4 +1,4 @@
-# Smart Service ECL — węzeł cieplny Danfoss
+# Danfoss ECL310 — węzeł cieplny (integracja Smart Service)
 
 Integracja Home Assistant, która **tylko czyta** regulator węzła cieplnego Danfoss ECL Comfort 296 / 310 przez Modbus/TCP:
 temperatury, zadane, nastawy, krzywą grzewczą, tryby, alarmy i licznik ciepła (M-bus).
@@ -27,7 +27,7 @@ wszystko” dla nieznanych kluczy.
 
 ## Dodanie
 
-*Ustawienia › Urządzenia i usługi › Dodaj integrację › Smart Service ECL*:
+*Ustawienia › Urządzenia i usługi › Dodaj integrację › Danfoss ECL310*:
 
 - **Adres IP regulatora**,
 - **Port**: 502,
@@ -75,7 +75,8 @@ Encje mają stałe klucze (`unique_id` = `<numer seryjny>_<klucz>`), więc MIGIE
 Danfoss, *ECL Comfort 210 / 296 / 310, communication description*, VI.LG.V5.02 (2017); Danfoss, *Installation Guide
 ECL Comfort 210/296/310, A237/A337* (087H3806); Modbus Application Protocol V1.1b3; Modbus Messaging on TCP/IP
 Implementation Guide V1.0b. Kod jest napisany od zera. Danfoss i ECL Comfort są znakami towarowymi Danfoss A/S.
-Integracja nie jest produktem Danfoss.
+Integracja nie jest produktem Danfoss. Nazwa „Danfoss ECL310” opisuje regulator, który integracja czyta; autorem
+integracji jest Smart Service.
 
 ## Licencja
 

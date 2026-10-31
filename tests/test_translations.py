@@ -120,4 +120,7 @@ def test_the_manifest_needs_nothing_to_install() -> None:
     assert manifest["iot_class"] == "local_polling"
     assert manifest["config_flow"] is True
     hacs = read(COMPONENT.parents[1] / "hacs.json")
-    assert hacs["name"] == "Smart Service ECL"
+    # 0.1.2: the integration is "Danfoss ECL310".
+    assert hacs["name"] == "Danfoss ECL310"
+    assert manifest["name"] == "Danfoss ECL310"
+    assert manifest["domain"] == "smartservice_ecl"
