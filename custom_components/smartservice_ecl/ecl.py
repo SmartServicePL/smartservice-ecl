@@ -67,7 +67,7 @@ class Application:
     name: str
     roles: Mapping[int, str]
     dhw: bool = True
-    # 0.1.1 (GŁÓWNY 31.10): the roles are every input the application uses -
+    # 0.1.1: the roles are every input the application uses -
     # no entity for the others (A237.1: S4, S7, S9, S10).
     inputs_complete: bool = False
 
@@ -163,7 +163,7 @@ def identity_from(registers: Mapping[int, int]) -> Identity:
     )
 
 
-# Operator 31.10: the entry's title - "ECL 296/310 - A237.1"; without a sure
+# 0.1.2: the entry's title - "ECL 296/310 - A237.1"; without a sure
 # model "ECL - A237.1". The title of 0.1.0/0.1.1 was "ECL A237.1".
 def entry_title(identity: Identity) -> str:
     short = identity.model_short

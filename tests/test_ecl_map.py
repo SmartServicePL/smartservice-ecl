@@ -102,7 +102,7 @@ def test_the_identity_and_the_supported_keys() -> None:
 def test_the_model_and_the_title_from_the_code_number(
     code: int | None, short: str | None, model: str, title: str
 ) -> None:
-    """0.1.2 (operator 31.10): the entry "ECL <model> - <key>", the device
+    """0.1.2: the entry "ECL <model> - <key>", the device
     named "Danfoss ECL310" by the integration."""
 
     registers = {35: 257, 36: 0x00A7, 37: 0xFEE3, 2060: 65, 2061: 237, 2062: 1, 2063: 0x0102}

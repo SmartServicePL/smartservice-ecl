@@ -40,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EclConfigEntry) -> bool:
     except (EclConnectionError, EclModbusError) as err:
         await client.close()
         raise ConfigEntryNotReady(str(err)) from err
-    # 0.1.2 (operator 31.10): the old default title becomes "ECL <model> -
+    # 0.1.2: the old default title becomes "ECL <model> -
     # <key>"; a title changed by hand stays as the user wrote it.
     if entry.title == ecl.old_entry_title(identity) and entry.title != ecl.entry_title(identity):
         hass.config_entries.async_update_entry(entry, title=ecl.entry_title(identity))

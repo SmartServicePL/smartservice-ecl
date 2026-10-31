@@ -42,6 +42,21 @@ async def add(hass: HomeAssistant, fake: FakeEcl) -> config_entries.ConfigFlowRe
     return result
 
 
+def the_device(hass: HomeAssistant) -> dr.DeviceEntry | None:
+    """The controller's device of the one entry (device_registry.async_get_device
+    is an error in tests since Home Assistant 2026.10: identifiers are no longer
+    unique across entries)."""
+
+    entries = hass.config_entries.async_entries(DOMAIN)
+    assert len(entries) == 1
+    devices = dr.async_entries_for_config_entry(dr.async_get(hass), entries[0].entry_id)
+    assert len(devices) <= 1
+    if not devices:
+        return None
+    assert (DOMAIN, SERIAL) in devices[0].identifiers
+    return devices[0]
+
+
 def entity(hass: HomeAssistant, domain: str, key: str) -> str:
     entity_id = er.async_get(hass).async_get_entity_id(domain, DOMAIN, f"{SERIAL}_{key}")
     assert entity_id is not None, key
@@ -51,9 +66,9 @@ def entity(hass: HomeAssistant, domain: str, key: str) -> str:
 async def test_add_a237_and_read_only(hass: HomeAssistant, fake: FakeEcl) -> None:
     result = await add(hass, fake)
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    # 0.1.2 (operator 31.10): "ECL <model> - <key>"; the device "Danfoss ECL310".
+    # 0.1.2: "ECL <model> - <key>"; the device "Danfoss ECL310".
     assert result["title"] == "ECL 296/310 - A237.1"
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+    device = the_device(hass)
     assert device is not None
     assert (device.name, device.manufacturer, device.model) == ("Danfoss ECL310", "Danfoss", "ECL Comfort 296/310")
     assert result["data"] == {CONF_HOST: "127.0.0.1", CONF_PORT: fake.port, CONF_UNIT: 1}
@@ -190,7 +205,7 @@ async def test_the_update_renames_the_default_title_and_keeps_every_entity_id(ha
         assert entity(hass, entity_id.split(".")[0], key) == entity_id, key
         assert hass.states.get(entity_id) is not None, key
     assert hass.states.get(kept["outdoor_temperature"]).state == "-3.5"
-    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+    device = the_device(hass)
     assert device is not None and device.name == "Danfoss ECL310"
 
 
@@ -207,7 +222,7 @@ async def test_without_the_code_number_no_model_is_guessed(hass: HomeAssistant) 
     try:
         result = await add(hass, server)
         assert result["title"] == "ECL - A237.1"
-        device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+        device = the_device(hass)
         assert device is not None and (device.name, device.model) == ("Danfoss ECL310", "ECL Comfort")
     finally:
         await server.stop()

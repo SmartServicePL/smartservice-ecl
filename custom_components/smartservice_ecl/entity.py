@@ -41,7 +41,7 @@ class EclEntity(CoordinatorEntity[EclCoordinator]):
             sw_version=identity.software,
             hw_version=f"{identity.key} v{identity.version}",
             serial_number=str(identity.serial),
-            # Operator 31.10: the device is "Danfoss ECL310" (its entities keep
+            # 0.1.2: the device is "Danfoss ECL310" (its entities keep
             # their entity_id - the registry holds it by unique_id).
             name=DEVICE_NAME,
         )

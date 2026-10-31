@@ -89,7 +89,7 @@ def test_every_stable_key_has_a_name_and_the_roles_are_among_them() -> None:
 
 
 def test_the_names_follow_danfoss_with_the_input() -> None:
-    """0.1.1 (GŁÓWNY 31.10): the names of ECL Portal (Graph -> Configuration):
+    """0.1.1: the names of ECL Portal (Graph -> Configuration):
     en as Danfoss with the input, pl "obieg 1" / "obieg 2 (c.w.u.)"; the keys
     (and so unique_id and entity_id) never change."""
 
@@ -120,7 +120,7 @@ def test_the_manifest_needs_nothing_to_install() -> None:
     assert manifest["iot_class"] == "local_polling"
     assert manifest["config_flow"] is True
     hacs = read(COMPONENT.parents[1] / "hacs.json")
-    # 0.1.2 (operator 31.10): the integration is "Danfoss ECL310".
+    # 0.1.2: the integration is "Danfoss ECL310".
     assert hacs["name"] == "Danfoss ECL310"
     assert manifest["name"] == "Danfoss ECL310"
     assert manifest["domain"] == "smartservice_ecl"
