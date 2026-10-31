@@ -8,7 +8,7 @@ def reg(pnu: int) -> int:
     return pnu - 1
 
 
-def a237_registers(*, meter: bool = False, application: int = 237) -> dict[int, int]:
+def a237_registers(*, meter: bool = False, application: int = 237, sub: int = 1) -> dict[int, int]:
     values = {
         # Identity: software 1.01, serial 11009763, A237.1 version 1.02.
         35: 257,
@@ -16,7 +16,7 @@ def a237_registers(*, meter: bool = False, application: int = 237) -> dict[int, 
         37: 0xFEE3,
         2060: 65,
         2061: application,
-        2062: 1,
+        2062: sub,
         2063: 0x0102,
         # S1 -3.50 °C (negative), S2 none (192.00 °C), S3 52.30, S4 none,
         # S5 38.10, S6 54.20 °C; S7-S10 none.
@@ -27,8 +27,11 @@ def a237_registers(*, meter: bool = False, application: int = 237) -> dict[int, 
         10205: 3810,
         10206: 5420,
         **{10200 + n: 19200 for n in range(7, 11)},
-        # Targets: flow 52.00 °C, hot water 55.00 °C.
+        # Targets: room 21.00 °C (R2), flow 52.00 °C (R3), return 40.00 °C (R5),
+        # hot water 55.00 °C.
+        11252: 2100,
         11253: 5200,
+        11255: 4000,
         12256: 5500,
         # Setpoints (x10) and the curve (Danfoss defaults).
         11175: 10,

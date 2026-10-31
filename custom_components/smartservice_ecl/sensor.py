@@ -26,7 +26,12 @@ class EclSensorDescription(EclDescription, SensorEntityDescription):
 
 
 def _temperature(
-    key: str, pnu: int, *, enabled: bool = True, measured: bool = True
+    key: str,
+    pnu: int,
+    *,
+    enabled: bool = True,
+    measured: bool = True,
+    decode: Callable[[int | None], ecl.Value] = ecl.temperature,
 ) -> EclSensorDescription:
     return EclSensorDescription(
         key=key,
@@ -36,7 +41,7 @@ def _temperature(
         state_class=SensorStateClass.MEASUREMENT if measured else None,
         suggested_display_precision=1,
         entity_registry_enabled_default=enabled,
-        value=lambda data, pnu=pnu: ecl.temperature(data.get(pnu)),
+        value=lambda data, pnu=pnu, decode=decode: decode(data.get(pnu)),
     )
 
 
@@ -76,15 +81,27 @@ def _status(key: str, pnu: int, mode_pnu: int) -> EclSensorDescription:
     )
 
 
-def descriptions(roles: dict[int, str], meter: bool) -> list[EclSensorDescription]:
-    """Every sensor of this controller (its application's input roles)."""
+def descriptions(
+    roles: dict[int, str], meter: bool, complete: bool = False
+) -> list[EclSensorDescription]:
+    """Every sensor of this controller (its application's input roles). With
+    ``complete`` (0.1.1, A237.1) no entity for an input the application does
+    not use; otherwise such an input is offered disabled, a raw 0 unavailable."""
 
     out = [
-        _temperature(roles.get(n, f"input_s{n}"), ecl.RAW_SENSOR_PNU + n, enabled=n in roles)
+        _temperature(roles[n], ecl.RAW_SENSOR_PNU + n)
+        if n in roles
+        else _temperature(
+            f"input_s{n}", ecl.RAW_SENSOR_PNU + n, enabled=False, decode=ecl.free_input
+        )
         for n in range(1, 11)
+        if n in roles or not complete
     ]
     out += [
+        # p. 59: the references of circuit 1 (R2, R3, R5) and circuit 2 (R6).
+        _temperature("room_target", 11252),
         _temperature("flow_target", 11253),
+        _temperature("return_target", 11255),
         _temperature("dhw_target", 12256),
         _setting("room_comfort_setpoint", 11180, ecl.setpoint),
         _setting("room_saving_setpoint", 11181, ecl.setpoint),
@@ -149,7 +166,9 @@ async def async_setup_entry(
     roles = dict(application.roles) if application else {}
     async_add_entities(
         EclSensor(coordinator, description)
-        for description in descriptions(roles, coordinator.meter)
+        for description in descriptions(
+            roles, coordinator.meter, bool(application and application.inputs_complete)
+        )
     )
 
 

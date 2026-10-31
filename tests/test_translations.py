@@ -9,6 +9,8 @@ from pathlib import Path
 from tests.pure import COMPONENT, load
 
 ecl = load("ecl")
+# The names' dash (U+2013), as in the translations.
+DASH = chr(0x2013)
 
 # The stable keys MIGIELS proposes the entities by (PLAN_INTEGRACJA_ECL.md 5a).
 STABLE_SENSORS = {
@@ -19,7 +21,9 @@ STABLE_SENSORS = {
     "room_temperature",
     "dhw_tank_bottom_temperature",
     *(f"input_s{n}" for n in (2, 4, 7, 8, 9, 10)),
+    "room_target",
     "flow_target",
+    "return_target",
     "dhw_target",
     "room_comfort_setpoint",
     "room_saving_setpoint",
@@ -82,6 +86,31 @@ def test_every_stable_key_has_a_name_and_the_roles_are_among_them() -> None:
     assert set(strings["entity"]["sensor"]["heating_status"]["state"]) == set(ecl.STATUSES)
     pl = read(COMPONENT / "translations" / "pl.json")
     assert pl["config"]["error"]["unsupported"] == "Klucz aplikacji {key} nie jest jeszcze obsługiwany."
+
+
+def test_the_names_follow_danfoss_with_the_input() -> None:
+    """0.1.1: the names of ECL Portal (Graph -> Configuration):
+    en as Danfoss with the input, pl "obieg 1" / "obieg 2 (c.w.u.)"; the keys
+    (and so unique_id and entity_id) never change."""
+
+    en = read(COMPONENT / "strings.json")["entity"]["sensor"]
+    pl = read(COMPONENT / "translations" / "pl.json")["entity"]["sensor"]
+    for n, key in ecl.APPLICATIONS[("A", 237, 1)].roles.items():
+        assert f"S{n})" in en[key]["name"] and f"S{n})" in pl[key]["name"], key
+    assert en["flow_temperature"]["name"] == "Flow temp. (HC1, S3)"
+    assert en["primary_return_temperature"]["name"] == "Return temp. (HC1, S5)"
+    assert en["dhw_tank_temperature"]["name"] == "Upper temp. (DHW2, S6)"
+    assert en["dhw_tank_bottom_temperature"]["name"] == "Lower temp. (DHW2, S8)"
+    assert en["flow_target"]["name"] == "Flow temp. ref. (HC1)"
+    assert en["dhw_mode"]["name"] == "Mode (HC2)"
+    assert pl["flow_temperature"]["name"] == f"Temperatura zasilania {DASH} obieg 1 (S3)"
+    assert pl["primary_return_temperature"]["name"] == f"Temperatura powrotu {DASH} obieg 1 (S5)"
+    assert pl["dhw_mode"]["name"] == f"Tryb {DASH} obieg 2 (c.w.u.)"
+    for key in ("dhw_tank_temperature", "dhw_tank_bottom_temperature", "dhw_target", "dhw_comfort_setpoint", "dhw_saving_setpoint", "dhw_status"):
+        assert "obieg 2 (c.w.u." in pl[key]["name"], key
+    # The outputs stay neutral until their pumps are confirmed.
+    binary = read(COMPONENT / "translations" / "pl.json")["entity"]["binary_sensor"]
+    assert binary["relay_1"]["name"] == "Przekaźnik 1" and binary["triac_1"]["name"] == "Triak 1"
 
 
 def test_the_manifest_needs_nothing_to_install() -> None:

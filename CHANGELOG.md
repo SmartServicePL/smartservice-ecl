@@ -1,5 +1,13 @@
 # Zmiany
 
+## 0.1.1
+
+- Nazwy encji jak w ECL Portal Danfoss: obieg 1 (HC1) i obieg 2 (c.w.u.), z numerem wejścia, np. „Temperatura
+  zasilania – obieg 1 (S3)” / „Flow temp. (HC1, S3)”. Identyfikatory encji bez zmian, historia i automatyzacje zostają.
+- Nowe odczyty: zadana pokojowa (R2) i zadana powrotu (R5) obiegu 1.
+- A237.1: bez encji wejść, których aplikacja nie używa (S4, S7, S9, S10); wejście bez roli, które podaje 0, jest
+  niedostępne.
+
 ## 0.1.0
 
 - Pierwsza wersja: odczyt regulatora Danfoss ECL Comfort 296 / 310 z kluczem A237.1 / A237.2 przez Modbus/TCP —

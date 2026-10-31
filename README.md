@@ -10,7 +10,7 @@ w niej wcale. Nie wymaga też żadnych dodatkowych bibliotek (`requirements: []`
 
 | Regulator | Klucz aplikacji | Stan |
 |---|---|---|
-| ECL Comfort 310 / 296 z Ethernetem | A237.1, A237.2 (ogrzewanie + c.w.u. z zasobnikiem) | v0.1 |
+| ECL Comfort 310 / 296 z Ethernetem | A237.1, A237.2 (ogrzewanie + c.w.u. z zasobnikiem) | v0.1.1 |
 | inne klucze | — | dodanie kończy się komunikatem „Klucz aplikacji … nie jest jeszcze obsługiwany” |
 
 Klucz aplikacji integracja czyta z regulatora (rejestry 2060–2063), nie trzeba go wpisywać. Nie ma trybu „czytaj
@@ -40,13 +40,13 @@ regulatora (rozpoznaje go po numerze seryjnym).
 
 | Encja | Skąd (parametr Danfoss) |
 |---|---|
-| Temperatura zewnętrzna (S1), Temperatura pokojowa (S2), Zasilanie obiegu (S3), Powrót strony pierwotnej (S5), Zasobnik c.w.u. góra (S6) i dół (S8) | wejścia S, ×0,01 °C (A237.1) |
-| Pozostałe wejścia (A237.1: S4, S7, S9, S10; A237.2: także S2 i S8) | domyślnie wyłączone (rola zależy od instalacji) |
-| Zadana zasilania obiegu, Zadana c.w.u. | 11253, 12256 |
-| Nastawy pokojowe i c.w.u. (komfort, oszczędna) | 11180–11181, 12190–12191 |
-| Krzywa: zasilanie przy −30, −15, −5, 0, 5 i 15 °C | 11400–11405 |
-| Tryb i status ogrzewania i c.w.u. | 4201–4202, 4211–4212 |
-| Ograniczenie powrotu działa, Tryb ręczny, Alarm, Błąd czujnika | 4220, 4201, 1024–1025, 2054–2055 |
+| Temperatura zewnętrzna (S1), Temperatura pokojowa – obieg 1 (S2), Temperatura zasilania – obieg 1 (S3), Temperatura powrotu – obieg 1 (S5), Temperatura górna i dolna – obieg 2 (c.w.u., S6 i S8) | wejścia S, ×0,01 °C (A237.1); nazwy jak w ECL Portal: Outdoor temp., Room temp. (HC1), Flow temp. (HC1), Return temp. (HC1), Upper / Lower temp. (DHW2) |
+| Pozostałe wejścia | A237.1: brak (aplikacja ich nie używa); A237.2: S2, S4, S7… domyślnie wyłączone, wejście bez roli podające 0 jest niedostępne |
+| Zadana pokojowa (R2), Zadana zasilania (R3), Zadana powrotu (R5) – obieg 1; Zadana górna – obieg 2 (c.w.u., R6) | 11252, 11253, 11255, 12256 |
+| Nastawy komfort i oszczędna – obieg 1 (pokój) i obieg 2 (c.w.u.) | 11180–11181, 12190–12191 |
+| Krzywa – obieg 1: zasilanie przy −30, −15, −5, 0, 5 i 15 °C | 11400–11405 |
+| Tryb i status – obieg 1 oraz obieg 2 (c.w.u.) | 4201–4202, 4211–4212 |
+| Ograniczenie powrotu działa, Tryb ręczny – obieg 1, Alarm, Błąd czujnika | 4220, 4201, 1024–1025, 2054–2055 |
 | Przekaźniki i triaki | 4006–4011, 4000–4005 (diagnostyczne, domyślnie wyłączone) |
 | Licznik ciepła: zasilanie, powrót, moc, energia | 6006–6015, tylko gdy licznik M-bus jest podpięty (typ danych 0) |
 
@@ -54,8 +54,9 @@ regulatora (rozpoznaje go po numerze seryjnym).
   w dzienniku i w diagnostyce.
 - Parametr, którego regulator nie ma (wyjątek Modbus 02), też jest niedostępny. Integracja nie pyta o niego w każdym cyklu.
 - Odczyt co 30 s (jedno połączenie, regulator zamyka bezczynne po ok. 75 s). Nastawy i krzywa są czytane raz na godzinę.
-- **S5 to powrót strony pierwotnej** (sieci ciepłowniczej, przy zaworze M1), a nie powrót z grzejników. Ograniczenie
-  powrotu regulatora działa na tej temperaturze.
+- **S5 („Temperatura powrotu – obieg 1”, w portalu „Return temp. (HC1)”) to powrót strony pierwotnej** (sieci
+  ciepłowniczej, przy zaworze M1), a nie powrót z grzejników. Ograniczenie powrotu regulatora działa na tej temperaturze.
+  S3 („Temperatura zasilania – obieg 1”) mierzy zasilanie za wymiennikiem, wspólne dla grzejników i ładowania zasobnika.
 - **Role czujników sprawdź z „Przeglądem wejść” na wyświetlaczu regulatora.** Instalacja może być podłączona inaczej.
 - Przekaźniki i triaki mają neutralne nazwy (Przekaźnik 1…6, Triak 1…6). Opis komunikacji Danfoss odsyła po ich
   przypisanie do pomp P1–P3 i zaworu M1 do opisu aplikacji, a tego nie dało się potwierdzić z tekstu.

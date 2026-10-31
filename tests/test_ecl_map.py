@@ -31,6 +31,33 @@ def test_temperatures_disconnected_and_negative() -> None:
     assert ecl.curve_point(5).value is None
 
 
+def test_an_unused_input_reading_0_is_no_reading() -> None:
+    """0.1.1: S7 of an A237.1 in service read a plain 0 (not 192.00 °C) - on
+    an input without a role that is no measurement; with a role (e.g. S1
+    outdoors) 0.00 °C stays a real value."""
+
+    unused = ecl.free_input(0)
+    assert unused.value is None and unused.reason == ecl.UNUSED_INPUT_TEXT
+    assert ecl.free_input(19200).value is None
+    assert ecl.free_input(2150) == ecl.Value(21.5)
+    assert ecl.free_input(None) == ecl.MISSING
+    assert ecl.temperature(0) == ecl.Value(0.0)
+
+
+def test_which_inputs_an_application_offers() -> None:
+    # A237.1: its six inputs are all it uses - no S4, S7, S9, S10.
+    assert ecl.APPLICATIONS[("A", 237, 1)].inputs_complete is True
+    # A237.2: roles not confirmed - its other inputs stay offered (disabled).
+    assert ecl.APPLICATIONS[("A", 237, 2)].inputs_complete is False
+
+
+def test_the_references_of_circuit_1_are_read() -> None:
+    """p. 59: R2 room 11252, R3 flow 11253, R5 return 11255; circuit 2 R6 12256."""
+
+    fast = ecl.fast_pnus(meter=False)
+    assert {11252, 11253, 11255, 12256} <= set(fast)
+
+
 def test_modes_statuses_and_flags() -> None:
     assert ecl.mode(0) == ecl.Value("manual")
     assert ecl.mode(1) == ecl.Value("scheduled")

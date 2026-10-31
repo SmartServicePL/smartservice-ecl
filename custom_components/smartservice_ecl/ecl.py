@@ -5,8 +5,9 @@ Source: Danfoss "ECL Comfort 210 / 296 / 310, communication description"
 VI.LG.V5.02 (2017.02); page numbers are the document's own. The roles of the
 inputs of application A237 (S1 outdoor, S3 flow, S5 return, S6 tank) are the
 installation guide's (087H3806) and must be checked against the controller's
-"input overview" on site; inputs without a sure role are offered as "Wejście
-Sn", disabled by default.
+"input overview" on site. A237.1 (its six inputs known) has no entity for
+the inputs it does not use; elsewhere inputs without a sure role are offered
+as "Wejście Sn", disabled by default (0.1.1).
 
 Every value is read only. A parameter the controller does not have answers
 Modbus exception 02 and stays unavailable.
@@ -66,6 +67,9 @@ class Application:
     name: str
     roles: Mapping[int, str]
     dhw: bool = True
+    # 0.1.1: the roles are every input the application uses -
+    # no entity for the others (A237.1: S4, S7, S9, S10).
+    inputs_complete: bool = False
 
 
 # A237 (installation guide 087H3806 and the "A237_1 ex. a" diagram of a
@@ -86,7 +90,7 @@ A237_1_ROLES = {
     8: "dhw_tank_bottom_temperature",
 }
 APPLICATIONS: Mapping[tuple[str, int, int], Application] = {
-    ("A", 237, 1): Application("A237.1", A237_1_ROLES),
+    ("A", 237, 1): Application("A237.1", A237_1_ROLES, inputs_complete=True),
     # A237.2 (seven inputs): only the roles common with A237.1 until a diagram
     # of A237.2 is seen; its other inputs stay "Wejście Sn", disabled.
     ("A", 237, 2): Application("A237.2", A237_ROLES),
@@ -168,6 +172,20 @@ def temperature(raw: int | None, scale: float = 0.01) -> Value:
     if not TEMPERATURE_RANGE[0] <= value <= TEMPERATURE_RANGE[1]:
         return Value(None, f"Odczyt poza zakresem czujnika ({value} °C).")
     return Value(value)
+
+
+# 0.1.1: an input the application does not use may read a plain 0 (seen on
+# S7 of an A237.1 in service: 0, not 192.00 °C) - never a measurement there.
+UNUSED_INPUT_TEXT = "Wejście nieużywane w tej aplikacji (regulator podaje 0)."
+
+
+def free_input(raw: int | None) -> Value:
+    """An input without a role: a raw 0 is no reading. An input WITH a role
+    keeps temperature() - a real 0.00 °C (e.g. outdoors) stays a value."""
+
+    if raw == 0:
+        return Value(None, UNUSED_INPUT_TEXT)
+    return temperature(raw)
 
 
 def setpoint(raw: int | None) -> Value:
@@ -276,7 +294,9 @@ def fast_pnus(meter: bool) -> list[int]:
     """Read every 30 s."""
 
     pnus = [RAW_SENSOR_PNU + n for n in range(1, 11)]
-    pnus += [11253, 12256, 4201, 4202, 4211, 4212, 4220, 1024, 1025, 2054, 2055]
+    # p. 59: the references of circuit 1 - R2 room (11252), R3 flow (11253),
+    # R5 return (11255); circuit 2: R6 hot water upper (12256).
+    pnus += [11252, 11253, 11255, 12256, 4201, 4202, 4211, 4212, 4220, 1024, 1025, 2054, 2055]
     pnus += list(range(4000, 4012))
     if meter:
         pnus += [METER_FLOW_T, METER_RETURN_T, *range(METER_POWER, METER_POWER + 2)]

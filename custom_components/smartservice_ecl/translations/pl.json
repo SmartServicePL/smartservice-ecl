@@ -38,19 +38,19 @@
         "name": "Temperatura zewnętrzna (S1)"
       },
       "flow_temperature": {
-        "name": "Zasilanie obiegu (S3)"
+        "name": "Temperatura zasilania – obieg 1 (S3)"
       },
       "primary_return_temperature": {
-        "name": "Powrót strony pierwotnej (S5)"
+        "name": "Temperatura powrotu – obieg 1 (S5)"
       },
       "dhw_tank_temperature": {
-        "name": "Zasobnik c.w.u. góra (S6)"
+        "name": "Temperatura górna – obieg 2 (c.w.u., S6)"
       },
       "room_temperature": {
-        "name": "Temperatura pokojowa (S2)"
+        "name": "Temperatura pokojowa – obieg 1 (S2)"
       },
       "dhw_tank_bottom_temperature": {
-        "name": "Zasobnik c.w.u. dół (S8)"
+        "name": "Temperatura dolna – obieg 2 (c.w.u., S8)"
       },
       "input_s2": {
         "name": "Wejście S2"
@@ -71,52 +71,52 @@
         "name": "Wejście S10"
       },
       "flow_target": {
-        "name": "Zadana zasilania obiegu"
+        "name": "Zadana zasilania – obieg 1 (R3)"
       },
       "dhw_target": {
-        "name": "Zadana c.w.u."
+        "name": "Zadana górna – obieg 2 (c.w.u., R6)"
       },
       "room_comfort_setpoint": {
-        "name": "Nastawa pokojowa komfort"
+        "name": "Nastawa pokojowa komfort – obieg 1"
       },
       "room_saving_setpoint": {
-        "name": "Nastawa pokojowa oszczędna"
+        "name": "Nastawa pokojowa oszczędna – obieg 1"
       },
       "dhw_comfort_setpoint": {
-        "name": "Nastawa c.w.u. komfort"
+        "name": "Nastawa komfort – obieg 2 (c.w.u.)"
       },
       "dhw_saving_setpoint": {
-        "name": "Nastawa c.w.u. oszczędna"
+        "name": "Nastawa oszczędna – obieg 2 (c.w.u.)"
       },
       "curve_m30": {
-        "name": "Krzywa: zasilanie przy −30 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy −30 °C"
       },
       "curve_m15": {
-        "name": "Krzywa: zasilanie przy −15 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy −15 °C"
       },
       "curve_m5": {
-        "name": "Krzywa: zasilanie przy −5 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy −5 °C"
       },
       "curve_0": {
-        "name": "Krzywa: zasilanie przy 0 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy 0 °C"
       },
       "curve_p5": {
-        "name": "Krzywa: zasilanie przy 5 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy 5 °C"
       },
       "curve_p15": {
-        "name": "Krzywa: zasilanie przy 15 °C"
+        "name": "Krzywa – obieg 1: zasilanie przy 15 °C"
       },
       "flow_min": {
-        "name": "Zasilanie minimalne"
+        "name": "Zasilanie minimalne – obieg 1"
       },
       "flow_max": {
-        "name": "Zasilanie maksymalne"
+        "name": "Zasilanie maksymalne – obieg 1"
       },
       "curve_slope": {
-        "name": "Nachylenie krzywej (Danfoss)"
+        "name": "Nachylenie krzywej – obieg 1 (Danfoss)"
       },
       "heating_mode": {
-        "name": "Tryb ogrzewania",
+        "name": "Tryb – obieg 1",
         "state": {
           "manual": "Ręczny",
           "scheduled": "Według harmonogramu",
@@ -127,7 +127,7 @@
         }
       },
       "heating_status": {
-        "name": "Status ogrzewania",
+        "name": "Status – obieg 1",
         "state": {
           "saving": "Oszczędność",
           "pre_comfort": "Przed komfortem",
@@ -140,7 +140,7 @@
         }
       },
       "dhw_mode": {
-        "name": "Tryb c.w.u.",
+        "name": "Tryb – obieg 2 (c.w.u.)",
         "state": {
           "manual": "Ręczny",
           "scheduled": "Według harmonogramu",
@@ -151,7 +151,7 @@
         }
       },
       "dhw_status": {
-        "name": "Status c.w.u.",
+        "name": "Status – obieg 2 (c.w.u.)",
         "state": {
           "saving": "Oszczędność",
           "pre_comfort": "Przed komfortem",
@@ -174,6 +174,12 @@
       },
       "meter_energy": {
         "name": "Licznik ciepła: energia"
+      },
+      "room_target": {
+        "name": "Zadana pokojowa – obieg 1 (R2)"
+      },
+      "return_target": {
+        "name": "Zadana powrotu – obieg 1 (R5)"
       }
     },
     "binary_sensor": {
@@ -181,7 +187,7 @@
         "name": "Ograniczenie powrotu działa"
       },
       "manual_mode": {
-        "name": "Tryb ręczny"
+        "name": "Tryb ręczny – obieg 1"
       },
       "alarm": {
         "name": "Alarm"
