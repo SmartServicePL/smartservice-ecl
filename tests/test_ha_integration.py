@@ -74,12 +74,15 @@ async def test_add_a237_and_read_only(hass: HomeAssistant, fake: FakeEcl) -> Non
     assert state("binary_sensor", "manual_mode") == "off"
     assert state("binary_sensor", "alarm") == "off"
     # A237.1: S2 the room, S8 the tank bottom - both enabled (here no sensor:
-    # 192.00 °C, unavailable); S4, S7 without a role are disabled by default.
+    # 192.00 °C, unavailable); 0.1.1: no entity for S4, S7, S9, S10 (unused).
     registry = er.async_get(hass)
     assert registry.async_get(entity(hass, "sensor", "room_temperature")).disabled_by is None
     assert hass.states.get(entity(hass, "sensor", "dhw_tank_bottom_temperature")).state == STATE_UNAVAILABLE
-    assert registry.async_get(entity(hass, "sensor", "input_s4")).disabled_by is not None
-    assert registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_input_s2") is None
+    for n in (2, 4, 7, 8, 9, 10):
+        assert registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_input_s{n}") is None
+    # 0.1.1: the references of circuit 1 (R2, R5).
+    assert state("sensor", "room_target") == "21.0"
+    assert state("sensor", "return_target") == "40.0"
     assert registry.async_get_entity_id("sensor", DOMAIN, f"{SERIAL}_meter_power") is None
     # Read only: every request was a read (0x04 or 0x03).
     assert {function for _t, _u, function, _a in fake.requests} <= {0x03, 0x04}
@@ -125,6 +128,30 @@ async def test_the_heat_meter(hass: HomeAssistant) -> None:
         assert hass.states.get(entity(hass, "sensor", "meter_power")).state == "12.3"
         assert hass.states.get(entity(hass, "sensor", "meter_energy")).state == "7456.5"
         assert hass.states.get(entity(hass, "sensor", "meter_flow_temperature")).state == "70.1"
+    finally:
+        await server.stop()
+
+
+async def test_a237_2_offers_its_other_inputs_and_a_0_is_no_reading(hass: HomeAssistant) -> None:
+    """A237.2 (roles not confirmed): S2, S4, S7… stay offered, disabled; a raw
+    0 on such an input (S7 of a controller in service) is unavailable."""
+
+    registers = a237_registers(sub=2)
+    registers[10207 - 1] = 0  # S7 reads a plain 0
+    server = await FakeEcl(registers=registers).start()
+    try:
+        await add(hass, server)
+        registry = er.async_get(hass)
+        input_s7 = entity(hass, "sensor", "input_s7")
+        assert registry.async_get(input_s7).disabled_by is not None
+        assert registry.async_get(entity(hass, "sensor", "input_s4")).disabled_by is not None
+        registry.async_update_entity(input_s7, disabled_by=None)
+        entry = hass.config_entries.async_entries(DOMAIN)[0]
+        assert await hass.config_entries.async_reload(entry.entry_id)
+        await hass.async_block_till_done()
+        assert hass.states.get(input_s7).state == STATE_UNAVAILABLE
+        # A role keeps its value (S1 -3.5 °C).
+        assert hass.states.get(entity(hass, "sensor", "outdoor_temperature")).state == "-3.5"
     finally:
         await server.stop()
 
