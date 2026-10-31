@@ -14,5 +14,5 @@ SCAN_INTERVAL = timedelta(seconds=30)
 # Settings, the heat curve, the meter's setup: once an hour.
 SLOW_INTERVAL = timedelta(hours=1)
 MANUFACTURER = "Danfoss"
-# Operator 31.10: the integration and the device are "Danfoss ECL310".
+# 0.1.2: the integration and the device are "Danfoss ECL310".
 DEVICE_NAME = "Danfoss ECL310"

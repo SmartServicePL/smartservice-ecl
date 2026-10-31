@@ -163,7 +163,7 @@ def identity_from(registers: Mapping[int, int]) -> Identity:
     )
 
 
-# Operator 31.10: the entry's title - "ECL 296/310 - A237.1"; without a sure
+# 0.1.2: the entry's title - "ECL 296/310 - A237.1"; without a sure
 # model "ECL - A237.1". The title of 0.1.0/0.1.1 was "ECL A237.1".
 def entry_title(identity: Identity) -> str:
     short = identity.model_short
