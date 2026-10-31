@@ -84,6 +84,38 @@ def test_the_identity_and_the_supported_keys() -> None:
     assert other.key == "A266.1" and other.application is None
 
 
+@pytest.mark.parametrize(
+    ("code", "short", "model", "title"),
+    [
+        # p. 25: one code number for ECL Comfort 296 AND 310 - "296/310".
+        (3040, "296/310", "ECL Comfort 296/310", "ECL 296/310 - A237.1"),
+        (3044, "296/310", "ECL Comfort 296/310", "ECL 296/310 - A237.1"),
+        (3050, "310B", "ECL Comfort 310B", "ECL 310B - A237.1"),
+        (3054, "310B", "ECL Comfort 310B", "ECL 310B - A237.1"),
+        (3020, "210", "ECL Comfort 210", "ECL 210 - A237.1"),
+        (3034, "210B", "ECL Comfort 210B", "ECL 210B - A237.1"),
+        # Unknown or not read: no model guessed.
+        (9999, None, "ECL Comfort", "ECL - A237.1"),
+        (None, None, "ECL Comfort", "ECL - A237.1"),
+    ],
+)
+def test_the_model_and_the_title_from_the_code_number(
+    code: int | None, short: str | None, model: str, title: str
+) -> None:
+    """0.1.2 (operator 31.10): the entry "ECL <model> - <key>", the device
+    named "Danfoss ECL310" by the integration."""
+
+    registers = {35: 257, 36: 0x00A7, 37: 0xFEE3, 2060: 65, 2061: 237, 2062: 1, 2063: 0x0102}
+    if code is not None:
+        registers[19] = code
+    identity = ecl.identity_from(registers)
+    assert identity.code == code
+    assert (identity.model_short, identity.model) == (short, model)
+    assert ecl.entry_title(identity) == title
+    # The title of 0.1.0 / 0.1.1 (what the update replaces).
+    assert ecl.old_entry_title(identity) == "ECL A237.1"
+
+
 def test_the_meter_only_with_type_0() -> None:
     assert ecl.meter_present(255) is False and ecl.meter_present(1) is True
     assert ecl.meter_uint32(0, 1234, 0.1, 0) == ecl.Value(123.4)

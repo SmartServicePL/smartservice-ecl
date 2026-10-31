@@ -8,7 +8,9 @@ def reg(pnu: int) -> int:
     return pnu - 1
 
 
-def a237_registers(*, meter: bool = False, application: int = 237, sub: int = 1) -> dict[int, int]:
+def a237_registers(
+    *, meter: bool = False, application: int = 237, sub: int = 1, code: int | None = 3040
+) -> dict[int, int]:
     values = {
         # Identity: software 1.01, serial 11009763, A237.1 version 1.02.
         35: 257,
@@ -65,6 +67,9 @@ def a237_registers(*, meter: bool = False, application: int = 237, sub: int = 1)
         6000: 255,
         6001: 0,
     }
+    # 0.1.2: the code number (PNU 19) - 087H3040, ECL Comfort 296 / 310.
+    if code is not None:
+        values[19] = code
     if meter:
         values.update(
             {

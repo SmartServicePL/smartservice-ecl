@@ -22,7 +22,9 @@ type EclConfigEntry = ConfigEntry[EclCoordinator]
 async def read_identity(client: EclModbusClient) -> ecl.Identity:
     """The controller's application key, versions and serial number."""
 
-    registers = await EclReader(client).read(ecl.IDENTITY_PNUS)
+    # 0.1.2: the code number (PNU 19) too - optional (a controller without
+    # it keeps working, its model is then "ECL Comfort").
+    registers = await EclReader(client).read((*ecl.IDENTITY_PNUS, ecl.PNU_SALES_NUMBER))
     missing = [pnu for pnu in ecl.IDENTITY_PNUS if pnu not in registers]
     if missing:
         raise EclModbusError(0x02)
@@ -38,6 +40,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EclConfigEntry) -> bool:
     except (EclConnectionError, EclModbusError) as err:
         await client.close()
         raise ConfigEntryNotReady(str(err)) from err
+    # 0.1.2 (operator 31.10): the old default title becomes "ECL <model> -
+    # <key>"; a title changed by hand stays as the user wrote it.
+    if entry.title == ecl.old_entry_title(identity) and entry.title != ecl.entry_title(identity):
+        hass.config_entries.async_update_entry(entry, title=ecl.entry_title(identity))
     coordinator = EclCoordinator(hass, entry, client, identity)
     try:
         await coordinator.async_config_entry_first_refresh()

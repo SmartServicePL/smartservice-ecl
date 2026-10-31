@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from tests.ecl_registers import a237_registers
 from tests.fake_ecl import FakeEcl
 
@@ -50,7 +51,11 @@ def entity(hass: HomeAssistant, domain: str, key: str) -> str:
 async def test_add_a237_and_read_only(hass: HomeAssistant, fake: FakeEcl) -> None:
     result = await add(hass, fake)
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "ECL A237.1"
+    # 0.1.2 (operator 31.10): "ECL <model> - <key>"; the device "Danfoss ECL310".
+    assert result["title"] == "ECL 296/310 - A237.1"
+    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+    assert device is not None
+    assert (device.name, device.manufacturer, device.model) == ("Danfoss ECL310", "Danfoss", "ECL Comfort 296/310")
     assert result["data"] == {CONF_HOST: "127.0.0.1", CONF_PORT: fake.port, CONF_UNIT: 1}
     assert result["result"].unique_id == SERIAL
 
@@ -152,6 +157,58 @@ async def test_a237_2_offers_its_other_inputs_and_a_0_is_no_reading(hass: HomeAs
         assert hass.states.get(input_s7).state == STATE_UNAVAILABLE
         # A role keeps its value (S1 -3.5 °C).
         assert hass.states.get(entity(hass, "sensor", "outdoor_temperature")).state == "-3.5"
+    finally:
+        await server.stop()
+
+
+def old_entry(title: str, port: int) -> MockConfigEntry:
+    """An entry as 0.1.0 / 0.1.1 created it (title "ECL A237.1")."""
+
+    return MockConfigEntry(domain=DOMAIN, title=title, unique_id=SERIAL, data={CONF_HOST: "127.0.0.1", CONF_PORT: port, CONF_UNIT: 1})
+
+
+async def test_the_update_renames_the_default_title_and_keeps_every_entity_id(hass: HomeAssistant, fake: FakeEcl) -> None:
+    """0.1.2: the old default title becomes "ECL 296/310 - A237.1"; the
+    entities of 0.1.1 keep their entity_id (the registry holds it by the
+    unchanged unique_id), even though the device is now "Danfoss ECL310"."""
+
+    entry = old_entry("ECL A237.1", fake.port)
+    entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    kept = {
+        key: registry.async_get_or_create(domain, DOMAIN, f"{SERIAL}_{key}", suggested_object_id=object_id, config_entry=entry).entity_id
+        for domain, key, object_id in (
+            ("sensor", "outdoor_temperature", "regulator_ecl_a237_1_outdoor_temp_s1"),
+            ("sensor", "flow_temperature", "regulator_ecl_a237_1_flow_temp_hc1_s3"),
+            ("binary_sensor", "manual_mode", "regulator_ecl_a237_1_manual_mode_hc1"),
+        )
+    }
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.title == "ECL 296/310 - A237.1"
+    for key, entity_id in kept.items():
+        assert entity(hass, entity_id.split(".")[0], key) == entity_id, key
+        assert hass.states.get(entity_id) is not None, key
+    assert hass.states.get(kept["outdoor_temperature"]).state == "-3.5"
+    device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+    assert device is not None and device.name == "Danfoss ECL310"
+
+
+async def test_a_title_changed_by_hand_stays(hass: HomeAssistant, fake: FakeEcl) -> None:
+    entry = old_entry("Mój węzeł", fake.port)
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.title == "Mój węzeł"
+
+
+async def test_without_the_code_number_no_model_is_guessed(hass: HomeAssistant) -> None:
+    server = await FakeEcl(registers=a237_registers(code=None)).start()
+    try:
+        result = await add(hass, server)
+        assert result["title"] == "ECL - A237.1"
+        device = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, SERIAL)})
+        assert device is not None and (device.name, device.model) == ("Danfoss ECL310", "ECL Comfort")
     finally:
         await server.stop()
 
