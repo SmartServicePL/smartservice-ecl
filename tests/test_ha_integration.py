@@ -132,10 +132,17 @@ async def test_the_heat_meter(hass: HomeAssistant) -> None:
 async def test_reconfigure_keeps_the_controller(hass: HomeAssistant, fake: FakeEcl) -> None:
     await add(hass, fake)
     entry = hass.config_entries.async_entries(DOMAIN)[0]
-    result = await entry.start_reconfigure_flow(hass)
+    # A real ConfigEntry (added through the flow): reconfigure as Home Assistant
+    # starts it (MockConfigEntry.start_reconfigure_flow does the same).
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={"source": config_entries.SOURCE_RECONFIGURE, "entry_id": entry.entry_id},
+    )
+    assert result["type"] is FlowResultType.FORM
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_HOST: "127.0.0.1", CONF_PORT: fake.port, CONF_UNIT: 254}
     )
+    await hass.async_block_till_done()
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     # The service address 254 (one controller on the connection).
