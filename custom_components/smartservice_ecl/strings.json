@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Danfoss ECL Comfort",
-        "description": "Read-only connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. Nothing in the controller is changed.",
+        "description": "Connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. The integration reads; it changes a setting only when its service \"Write a setting\" is called, only the room setpoints, the heat curve and the maximum flow, and never above the value set by the owner.",
         "data": {
           "host": "IP address of the controller",
           "port": "Port",
@@ -12,7 +12,7 @@
       },
       "reconfigure": {
         "title": "Change the controller's address",
-        "description": "Read-only connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. Nothing in the controller is changed.",
+        "description": "Connection over Modbus/TCP (port 502). Turn off any other Modbus connection to this controller first (e.g. a YAML `modbus:`) — the ECL may accept only one client. The integration reads; it changes a setting only when its service \"Write a setting\" is called, only the room setpoints, the heat curve and the maximum flow, and never above the value set by the owner.",
         "data": {
           "host": "IP address of the controller",
           "port": "Port",
@@ -230,6 +230,40 @@
       },
       "triac_6": {
         "name": "Triac 6"
+      }
+    }
+  },
+  "services": {
+    "zapisz_parametr": {
+      "name": "Write a setting",
+      "description": "Writes one setting of circuit 1 (A237.1) within the controller's range and never above the owner's value (the one before the integration's first write): room comfort and saving 5–40 °C in steps of 0.5 K, saving not above comfort; heat curve 10–150 °C not rising with the outdoor temperature; maximum flow 10–150 °C once. Each setting at most once a day, 10 writes a day in all. Reads the value back after a few seconds.",
+      "fields": {
+        "pnu": {
+          "name": "Parameter",
+          "description": "Parameter (Danfoss PNU): 11180 room comfort, 11181 room saving, 11400–11405 heat curve at −30/−15/−5/0/5/15 °C, 11178 maximum flow."
+        },
+        "wartosc": {
+          "name": "Value",
+          "description": "The new value in °C."
+        },
+        "config_entry_id": {
+          "name": "Controller",
+          "description": "Needed only when more than one controller is added."
+        }
+      }
+    },
+    "przywroc_parametr": {
+      "name": "Restore a setting",
+      "description": "Writes back the value the controller had before the integration's first write of this setting. Nothing is written when the setting was changed on the controller afterwards — a change by hand wins.",
+      "fields": {
+        "pnu": {
+          "name": "Parameter",
+          "description": "Parameter (Danfoss PNU): 11180 room comfort, 11181 room saving, 11400–11405 heat curve at −30/−15/−5/0/5/15 °C, 11178 maximum flow."
+        },
+        "config_entry_id": {
+          "name": "Controller",
+          "description": "Needed only when more than one controller is added."
+        }
       }
     }
   }

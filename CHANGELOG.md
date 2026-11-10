@@ -1,5 +1,18 @@
 # Zmiany
 
+## 0.2.0
+
+- Nowa usługa *Zapisz nastawę* (`smartservice_ecl.zapisz_parametr`) dla A237.1. Zapisuje tylko zadaną pokojową
+  komfort (11180) i oszczędną (11181, nie wyżej niż komfort), krzywą obiegu 1 (11400–11405, nierosnącą) oraz
+  jednorazowo maks. zasilania (11178), w zakresach regulatora i nigdy wyżej niż wartość sprzed pierwszego zapisu.
+  Każdy inny parametr i każda wartość spoza zakresu są odrzucane bez zapytania do regulatora.
+- Najwyżej 1 zapis na dobę na nastawę i 10 zapisów na dobę łącznie. Po zapisie odczyt kontrolny, który można raz
+  powtórzyć, gdy wartość się nie zgadza.
+- Nowa usługa *Przywróć nastawę* (`smartservice_ecl.przywroc_parametr`) przywraca wartość sprzed pierwszego zapisu.
+  Ręczna zmiana na regulatorze wygrywa i nie jest nadpisywana.
+- Klient Modbus ma jedną funkcję zapisu: 0x06, jeden rejestr. Odpowiedź musi powtórzyć zapytanie.
+- Bez encji do zapisu. Odczyt i identyfikatory encji bez zmian.
+
 ## 0.1.2
 
 - Integracja i urządzenie nazywają się „Danfoss ECL310”. Model urządzenia z numeru katalogowego regulatora

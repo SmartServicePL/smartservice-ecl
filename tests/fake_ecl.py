@@ -1,7 +1,10 @@
 """A fake Modbus/TCP server (standard library only) answering as an ECL
 Comfort 310: registers by address, Modbus exceptions, and on request the
 faults a real network gives (a wrong transaction id, another unit id, a
-wrong byte count, silence, a dropped connection)."""
+wrong byte count, silence, a dropped connection). 0.2.0: 0x06 writes one
+register and echoes the request; a register can refuse writes (an exception)
+or ignore them (the answer is right, the value stays - a control reading
+then differs)."""
 
 from __future__ import annotations
 
@@ -21,6 +24,9 @@ class FakeEcl:
     # One-shot faults, consumed by the next request.
     faults: list[str] = field(default_factory=list)
     exception_code: int = 0x04
+    # 0x06: register -> exception code; registers that keep their value.
+    refused_writes: dict[int, int] = field(default_factory=dict)
+    ignored_writes: set[int] = field(default_factory=set)
     requests: list[tuple[int, int, int, int]] = field(default_factory=list)
     connections: int = 0
     server: asyncio.base_events.Server | None = None
@@ -81,6 +87,15 @@ class FakeEcl:
             return bytes([function | 0x80, self.exception_code])
         if function in self.refused_functions:
             return bytes([function | 0x80, 0x01])
+        if function == 0x06:
+            # ``count`` is the value of a write.
+            if address in self.missing:
+                return bytes([function | 0x80, 0x02])
+            if address in self.refused_writes:
+                return bytes([function | 0x80, self.refused_writes[address]])
+            if address not in self.ignored_writes:
+                self.registers[address] = count
+            return bytes([function]) + struct.pack(">HH", address, count)
         if not 1 <= count <= 123:
             return bytes([function | 0x80, 0x03])
         wanted = range(address, address + count)

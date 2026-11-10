@@ -225,11 +225,61 @@ def test_limits_and_decoding() -> None:
     assert modbus.as_int16(0xFF38) == -200  # -2.00 °C at scale 100
     assert modbus.as_int16(0x0860) == 2144
     assert modbus.as_uint32(0x00A7, 0xFEE3) == 11009763  # Danfoss 6.11 example
-    # No write function exists in the client.
+    # 0.2.0: one write function - 0x06, one register (no 05, 0F, 10, 16, 17).
     text = Path(load("modbus").__file__ or "").read_text(encoding="utf-8")
     import re
 
-    # The only function codes: 0x04 and 0x03 (no write: 05, 06, 0F, 10, 16, 17).
     assert modbus.READ_FUNCTIONS == (0x04, 0x03)
-    assert re.findall(r"^[A-Z_]+ = (0x[0-9A-F]{2})$", text, re.M) == ["0x03", "0x04"]
-    assert "WRITE" not in text and "write_register" not in text
+    assert re.findall(r"^[A-Z_]+ = (0x[0-9A-F]{2})$", text, re.M) == ["0x03", "0x04", "0x06"]
+    assert modbus.WRITE_SINGLE_REGISTER == 0x06
+    assert "write_register" not in text and "write_multiple" not in text
+    for value in (-1, 0x10000):
+        with pytest.raises(ValueError):
+            run(lambda v=value: client.write_pnu(11180, v))
+    with pytest.raises(ValueError):
+        run(lambda: client.write_pnu(0, 1))
+
+
+def test_write_single_register() -> None:
+    """Modbus Application Protocol 6.6: the request 06 0001 0003 is echoed;
+    PNU 11180 is register 11179 (0x2BAB)."""
+
+    async def test() -> None:
+        fake, client = await started(registers={0x2BAB: 250})
+        await client.write_pnu(11180, 210)
+        assert fake.registers[0x2BAB] == 210
+        assert fake.requests[-1][2:] == (0x06, 0x2BAB)
+        assert await client.read_pnu(11180) == [210]
+        # A value outside the controller's range: exception 03.
+        fake.refused_writes = {0x2BAB: 0x03}
+        with pytest.raises(modbus.EclModbusError) as err:
+            await client.write_pnu(11180, 999)
+        assert err.value.code == 0x03
+        assert fake.registers[0x2BAB] == 210
+        await client.close()
+        await fake.stop()
+
+    run(test)
+
+
+def test_a_write_answer_that_does_not_echo_is_an_error() -> None:
+    """An answer with another value is not a confirmation."""
+
+    async def test() -> None:
+        fake, client = await started(registers={0x2BAB: 250})
+        original = fake._answer
+
+        def wrong(function: int, address: int, count: int, fault: str | None) -> bytes:
+            answer = original(function, address, count, fault)
+            if function == 0x06:
+                return answer[:-1] + bytes([answer[-1] ^ 1])
+            return answer
+
+        fake._answer = wrong
+        with pytest.raises(modbus.EclConnectionError, match="nie potwierdził"):
+            await client.write_pnu(11180, 210)
+        assert not client.connected
+        await client.close()
+        await fake.stop()
+
+    run(test)

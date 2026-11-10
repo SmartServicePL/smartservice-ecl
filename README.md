@@ -1,16 +1,19 @@
 # Danfoss ECL310 — węzeł cieplny (integracja Smart Service)
 
-Integracja Home Assistant, która **tylko czyta** regulator węzła cieplnego Danfoss ECL Comfort 296 / 310 przez Modbus/TCP:
+Integracja Home Assistant, która czyta regulator węzła cieplnego Danfoss ECL Comfort 296 / 310 przez Modbus/TCP:
 temperatury, zadane, nastawy, krzywą grzewczą, tryby, alarmy i licznik ciepła (M-bus).
 
-**Niczego w regulatorze nie zmienia.** Integracja zna tylko funkcje odczytu Modbus (0x04 i 0x03). Kodu zapisu nie ma
-w niej wcale. Nie wymaga też żadnych dodatkowych bibliotek (`requirements: []`).
+**Sama z siebie niczego w regulatorze nie zmienia.** Od wersji 0.2.0 ma usługę *Zapisz nastawę*. Usługa zmienia
+tylko kilka nastaw obiegu 1, nigdy nie wyżej niż ustawił właściciel, i działa tylko wtedy, gdy ktoś ją wywoła
+(zob. „Zapis nastaw”).
+Encji do zapisu nie ma, więc w panelu nie ma suwaków. Integracja nie wymaga żadnych dodatkowych bibliotek
+(`requirements: []`).
 
 ## Obsługiwane regulatory
 
 | Regulator | Klucz aplikacji | Stan |
 |---|---|---|
-| ECL Comfort 310 / 296 z Ethernetem | A237.1, A237.2 (ogrzewanie + c.w.u. z zasobnikiem) | v0.1.1 |
+| ECL Comfort 310 / 296 z Ethernetem | A237.1, A237.2 (ogrzewanie + c.w.u. z zasobnikiem) | odczyt v0.1.1, zapis nastaw A237.1 v0.2.0 |
 | inne klucze | — | dodanie kończy się komunikatem „Klucz aplikacji … nie jest jeszcze obsługiwany” |
 
 Klucz aplikacji integracja czyta z regulatora (rejestry 2060–2063), nie trzeba go wpisywać. Nie ma trybu „czytaj
@@ -61,10 +64,43 @@ regulatora (rozpoznaje go po numerze seryjnym).
 - Przekaźniki i triaki mają neutralne nazwy (Przekaźnik 1…6, Triak 1…6). Opis komunikacji Danfoss odsyła po ich
   przypisanie do pomp P1–P3 i zaworu M1 do opisu aplikacji, a tego nie dało się potwierdzić z tekstu.
 
+## Zapis nastaw (od 0.2.0)
+
+Usługa `smartservice_ecl.zapisz_parametr` (*Zapisz nastawę*) z polami `pnu` i `wartosc` zapisuje jedną nastawę
+funkcją Modbus 0x06. Używa tego samego połączenia co odczyt. Działa tylko z kluczem aplikacji **A237.1** i nie
+działa, gdy obieg 1 jest w trybie ręcznym.
+
+| Parametr | PNU | Zakres (jak w regulatorze) |
+|---|---|---|
+| Zadana pokojowa komfort | 11180 | 5,0–40,0 °C, krok 0,5 K |
+| Zadana pokojowa oszczędna | 11181 | 5,0–40,0 °C, krok 0,5 K, nie wyżej niż komfort |
+| Krzywa: zasilanie przy −30, −15, −5, 0, 5 i 15 °C | 11400–11405 | 10–150 °C, punkty nie rosną wraz z temperaturą zewnętrzną |
+| Maks. zasilania | 11178 | 10–150 °C, jednorazowo |
+
+- **Nigdy wyżej niż wartość właściciela**, czyli ta, którą regulator miał przed pierwszym zapisem integracji.
+  Integracja nastawy tylko obniża i przywraca. Regulator trzyma ostatnią zapisaną wartość także wtedy, gdy Home
+  Assistant nie działa, więc żaden zapis nie zostawi nastawy wyżej, niż ustawił właściciel.
+- Bezpieczną wartość docelową (np. granice dla podłogówki) wybiera program, który wywołuje usługę.
+- Każdy inny parametr (m.in. nachylenie 11175, tryby, zegar, c.w.u.) i każda wartość spoza zakresu są odrzucane.
+  Do regulatora nie idzie wtedy żadne zapytanie, a powód trafia do dziennika.
+- Krzywą obniża się od najcieplejszego punktu (11405), a podnosi od najzimniejszego (11400).
+- Każda nastawa może być zapisana najwyżej raz na dobę, a wszystkich zapisów na dobę może być najwyżej 10.
+  Regulator przechowuje nastawy w pamięci trwałej, dlatego zapisów jest mało.
+- Po 3 s integracja czyta wartość kontrolnie i zwraca wynik: `poprzednio`, `wartosc`, `odczyt`, `zgodny`. Gdy
+  odczyt się nie zgadza, tego samego dnia można raz powtórzyć tę samą wartość.
+- Przed pierwszym zapisem danej nastawy integracja zapamiętuje wartość z regulatora. Usługa
+  `smartservice_ecl.przywroc_parametr` (*Przywróć nastawę*) zapisuje ją z powrotem.
+- **Ręczna zmiana wygrywa.** Jeśli nastawę zmieniono na regulatorze po zapisie integracji, przywrócenie niczego nie
+  zapisuje. Zostaje wartość ustawiona ręcznie.
+- Zapisy, kopie i dziennik są w *Pobierz diagnostykę* (`writes`).
+- **Węzeł zwykle należy do dostawcy ciepła.** Zanim użyjesz zapisu, zapytaj go o zgodę.
+
 ## MIGIELS
 
 Encje mają stałe klucze (`unique_id` = `<numer seryjny>_<klucz>`), więc MIGIELS podpowiada je sam w kreatorze, na ekranie
-„Regulator węzła cieplnego”.
+„Regulator węzła cieplnego”. Gdy sterowanie ogrzewaniem jest włączone, MIGIELS ustawia nastawy z tabeli „Zapis nastaw”
+tą usługą. Przed zmianą robi kopię, a po każdym zapisie czyta wartość kontrolnie. Po wyłączeniu sterowania przywraca
+poprzednie nastawy.
 
 ## Diagnostyka
 

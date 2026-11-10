@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Danfoss ECL Comfort",
-        "description": "Połączenie tylko do odczytu przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja niczego w regulatorze nie zmienia.",
+        "description": "Połączenie przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja czyta; nastawę zmienia tylko na wywołanie usługi „Zapisz nastawę”, tylko zadane pokojowe, krzywą grzewczą i maks. zasilania i nigdy wyżej, niż ustawił właściciel.",
         "data": {
           "host": "Adres IP regulatora",
           "port": "Port",
@@ -12,7 +12,7 @@
       },
       "reconfigure": {
         "title": "Zmiana adresu regulatora",
-        "description": "Połączenie tylko do odczytu przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja niczego w regulatorze nie zmienia.",
+        "description": "Połączenie przez Modbus/TCP (port 502). Najpierw wyłącz inne połączenia Modbus z tym regulatorem (np. YAML `modbus:`) — ECL może przyjmować tylko jednego klienta. Integracja czyta; nastawę zmienia tylko na wywołanie usługi „Zapisz nastawę”, tylko zadane pokojowe, krzywą grzewczą i maks. zasilania i nigdy wyżej, niż ustawił właściciel.",
         "data": {
           "host": "Adres IP regulatora",
           "port": "Port",
@@ -230,6 +230,40 @@
       },
       "triac_6": {
         "name": "Triak 6"
+      }
+    }
+  },
+  "services": {
+    "zapisz_parametr": {
+      "name": "Zapisz nastawę",
+      "description": "Zapisuje jedną nastawę obiegu 1 (A237.1) w zakresie regulatora i nigdy wyżej niż wartość właściciela (sprzed pierwszego zapisu integracji): zadana pokojowa komfort i oszczędna 5–40 °C co 0,5 K, oszczędna nie wyżej niż komfort; krzywa 10–150 °C nierosnąca z temperaturą zewnętrzną; maks. zasilania 10–150 °C jednorazowo. Każda nastawa najwyżej raz na dobę, łącznie 10 zapisów na dobę. Po kilku sekundach czyta wartość kontrolnie.",
+      "fields": {
+        "pnu": {
+          "name": "Parametr",
+          "description": "Parametr (PNU Danfoss): 11180 zadana pokojowa komfort, 11181 oszczędna, 11400–11405 krzywa przy −30/−15/−5/0/5/15 °C, 11178 maks. zasilania."
+        },
+        "wartosc": {
+          "name": "Wartość",
+          "description": "Nowa wartość w °C."
+        },
+        "config_entry_id": {
+          "name": "Regulator",
+          "description": "Potrzebny tylko przy kilku dodanych regulatorach."
+        }
+      }
+    },
+    "przywroc_parametr": {
+      "name": "Przywróć nastawę",
+      "description": "Zapisuje z powrotem wartość, którą regulator miał przed pierwszym zapisem integracji. Nic nie zapisuje, gdy nastawę zmieniono potem na regulatorze — ręczna zmiana wygrywa.",
+      "fields": {
+        "pnu": {
+          "name": "Parametr",
+          "description": "Parametr (PNU Danfoss): 11180 zadana pokojowa komfort, 11181 oszczędna, 11400–11405 krzywa przy −30/−15/−5/0/5/15 °C, 11178 maks. zasilania."
+        },
+        "config_entry_id": {
+          "name": "Regulator",
+          "description": "Potrzebny tylko przy kilku dodanych regulatorach."
+        }
       }
     }
   }

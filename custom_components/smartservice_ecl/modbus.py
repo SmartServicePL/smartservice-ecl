@@ -1,11 +1,12 @@
-"""A small Modbus/TCP client that can only read - for the Danfoss ECL Comfort
-296/310 (communication description VI.LG.V5.02).
+"""A small Modbus/TCP client for the Danfoss ECL Comfort 296/310
+(communication description VI.LG.V5.02).
 
 Written from the Modbus specifications (Modbus Application Protocol V1.1b3,
 Modbus Messaging on TCP/IP Implementation Guide V1.0b) and the Danfoss
-document. It knows two function codes only: 0x04 Read Input Registers and
-0x03 Read Holding Registers. There is no code for any write function: the
-integration cannot change anything in the controller by its construction.
+document. It knows three function codes: 0x04 Read Input Registers, 0x03 Read
+Holding Registers and (0.2.0) 0x06 Write Single Register - one register at a
+time, used only by the service of write.py after its list and limits. No
+other write function exists (no 05, 0F, 10, 16, 17).
 
 * One TCP connection, one request at a time (a lock); the ECL closes an idle
   connection after about 75 s, a read every 30 s keeps it open.
@@ -30,6 +31,7 @@ import time
 READ_HOLDING_REGISTERS = 0x03
 READ_INPUT_REGISTERS = 0x04
 READ_FUNCTIONS = (READ_INPUT_REGISTERS, READ_HOLDING_REGISTERS)
+WRITE_SINGLE_REGISTER = 0x06
 MAX_REGISTERS = 123
 DEFAULT_PORT = 502
 DEFAULT_UNIT = 1
@@ -69,7 +71,8 @@ async def _open(host: str, port: int) -> tuple[asyncio.StreamReader, asyncio.Str
 
 
 class EclModbusClient:
-    """Read-only Modbus/TCP client of one ECL controller."""
+    """Modbus/TCP client of one ECL controller: reads, and writes one
+    register at a time (0x06)."""
 
     def __init__(
         self,
@@ -131,6 +134,17 @@ class EclModbusClient:
                 self._function = READ_HOLDING_REGISTERS
                 return await self._request(self._function, address, count)
 
+    async def write_pnu(self, pnu: int, value: int) -> None:
+        """0x06: one register of the Danfoss parameter number ``pnu``. The
+        answer must echo the request (Modbus Application Protocol 6.6)."""
+
+        if pnu < 1:
+            raise ValueError("PNU starts with 1")
+        if not 0 <= value <= 0xFFFF:
+            raise ValueError("value 0-65535")
+        async with self._lock:
+            await self._request(WRITE_SINGLE_REGISTER, pnu - 1, value)
+
     async def close(self) -> None:
         async with self._lock:
             await self._drop()
@@ -168,6 +182,8 @@ class EclModbusClient:
         return self._transaction
 
     async def _request(self, function: int, address: int, count: int) -> list[int]:
+        """``count`` is the value for 0x06."""
+
         reconnected = False
         while True:
             fresh = self._writer is None
@@ -212,6 +228,10 @@ class EclModbusClient:
             raise EclModbusError(body[1])
         if answered != function:
             raise EclConnectionError("Odpowiedź z inną funkcją.")
+        if function == WRITE_SINGLE_REGISTER:
+            if body != pdu:
+                raise EclConnectionError("Regulator nie potwierdził zapisu tej wartości.")
+            return [count]
         if len(body) < 2 or body[1] != 2 * count or len(body) != 2 + 2 * count:
             raise EclConnectionError("Liczba bajtów nie zgadza się z liczbą rejestrów.")
         return list(struct.unpack(f">{count}H", body[2:]))

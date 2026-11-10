@@ -35,4 +35,6 @@ async def async_get_config_entry_diagnostics(
         "missing_parameters": sorted(coordinator.reader.missing),
         "unavailable_reasons": coordinator.reasons,
         "registers_by_pnu": registers,
+        # 0.2.0: the owner's copies, our last values and the log of writes.
+        "writes": coordinator.ledger.data,
     }
