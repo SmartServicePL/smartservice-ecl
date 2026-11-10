@@ -92,6 +92,9 @@ działa, gdy obieg 1 jest w trybie ręcznym.
   `smartservice_ecl.przywroc_parametr` (*Przywróć nastawę*) zapisuje ją z powrotem.
 - **Ręczna zmiana wygrywa.** Jeśli nastawę zmieniono na regulatorze po zapisie integracji, przywrócenie niczego nie
   zapisuje. Zostaje wartość ustawiona ręcznie.
+- Każda odmowa ma stały kod (`translation_key` błędu): `pnu_niedozwolony`, `poza_zakresem`, `powyzej_wlasciciela`,
+  `limit_doby`, `tryb_reczny`, `brak_polaczenia`, `odczyt_niezgodny` (zapis wysłany, odczyt kontrolny się nie
+  udał), `brak_kopii`, `zmiana_reczna`, `brak_regulatora`. Kody się nie zmieniają, treść komunikatu może.
 - Zapisy, kopie i dziennik są w *Pobierz diagnostykę* (`writes`).
 - **Węzeł zwykle należy do dostawcy ciepła.** Zanim użyjesz zapisu, zapytaj go o zgodę.
 

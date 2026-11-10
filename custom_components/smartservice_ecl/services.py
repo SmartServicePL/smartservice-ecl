@@ -15,6 +15,7 @@ from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
 from .coordinator import EclCoordinator
+from .write import NO_CONNECTION, NO_CONTROLLER
 
 SERVICE_WRITE = "zapisz_parametr"
 SERVICE_RESTORE = "przywroc_parametr"
@@ -37,6 +38,15 @@ RESTORE_SCHEMA = vol.Schema(
 )
 
 
+def _invalid(reason: str, code: str) -> ServiceValidationError:
+    return ServiceValidationError(
+        reason,
+        translation_domain=DOMAIN,
+        translation_key=code,
+        translation_placeholders={"reason": reason},
+    )
+
+
 def _coordinator(hass: HomeAssistant, data: dict[str, Any]) -> EclCoordinator:
     """The controller of ``config_entry_id``, or the only one loaded."""
 
@@ -48,11 +58,11 @@ def _coordinator(hass: HomeAssistant, data: dict[str, Any]) -> EclCoordinator:
     if ATTR_ENTRY in data:
         loaded = [entry for entry in loaded if entry.entry_id == data[ATTR_ENTRY]]
         if not loaded:
-            raise ServiceValidationError("Nie ma działającego regulatora o tym config_entry_id.")
+            raise _invalid("Nie ma działającego regulatora o tym config_entry_id.", NO_CONTROLLER)
     if not loaded:
-        raise ServiceValidationError("Żaden regulator ECL nie jest teraz połączony.")
+        raise _invalid("Żaden regulator ECL nie jest teraz połączony.", NO_CONNECTION)
     if len(loaded) > 1:
-        raise ServiceValidationError("Jest kilka regulatorów — podaj config_entry_id.")
+        raise _invalid("Jest kilka regulatorów — podaj config_entry_id.", NO_CONTROLLER)
     return loaded[0].runtime_data
 
 

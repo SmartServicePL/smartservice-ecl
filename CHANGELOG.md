@@ -1,5 +1,12 @@
 # Zmiany
 
+## 0.2.1
+
+- Błędy usług *Zapisz nastawę* i *Przywróć nastawę* mają stałe kody (`translation_key`): `pnu_niedozwolony`,
+  `poza_zakresem`, `powyzej_wlasciciela`, `limit_doby`, `tryb_reczny`, `brak_polaczenia`, `odczyt_niezgodny`,
+  `brak_kopii`, `zmiana_reczna`, `brak_regulatora`. Treść komunikatu bez zmian.
+- Pola usług i kształt odpowiedzi bez zmian.
+
 ## 0.2.0
 
 - Nowa usługa *Zapisz nastawę* (`smartservice_ecl.zapisz_parametr`) dla A237.1. Zapisuje tylko zadaną pokojową

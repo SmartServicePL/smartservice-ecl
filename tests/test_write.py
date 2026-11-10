@@ -240,3 +240,54 @@ def test_texts() -> None:
     assert write.text(11180, 215) == "21,5 °C"
     assert write.text(11403, 37) == "37 °C"
     assert write.text(11178, 50) == "50 °C"
+
+
+def test_every_refusal_has_its_fixed_code() -> None:
+    """0.2.1: the codes a caller recognises (translation_key)."""
+
+    assert write.ERROR_CODES == (
+        "pnu_niedozwolony",
+        "poza_zakresem",
+        "powyzej_wlasciciela",
+        "limit_doby",
+        "tryb_reczny",
+        "brak_polaczenia",
+        "odczyt_niezgodny",
+        "brak_kopii",
+        "zmiana_reczna",
+        "brak_regulatora",
+    )
+
+    def code(action) -> str:
+        with pytest.raises(Refused) as err:
+            action()
+        assert err.value.code in write.ERROR_CODES
+        return err.value.code
+
+    assert code(lambda: write.to_raw(11175, 1.0)) == "pnu_niedozwolony"
+    assert code(lambda: write.to_raw(11180, 40.5)) == "poza_zakresem"
+    assert code(lambda: write.to_raw(11180, 21.3)) == "poza_zakresem"
+    assert code(lambda: write.check_against(11181, 260, CURRENT)) == "poza_zakresem"
+    assert code(lambda: write.check_against(11400, 40, CURRENT)) == "poza_zakresem"
+    ledger = write.Ledger()
+    assert code(lambda: ledger.check_owner(11400, 76, 75)) == "powyzej_wlasciciela"
+    assert code(lambda: ledger.restore_target(11180, 250)) == "brak_kopii"
+    assert code(lambda: ledger.restore_target(4201, 1)) == "pnu_niedozwolony"
+    ledger.record_write(11180, 210, 250, True, DAY)
+    assert code(lambda: ledger.allow_write(11180, 205, DAY)) == "limit_doby"
+    assert code(lambda: ledger.restore_target(11180, 220)) == "zmiana_reczna"
+    ledger.record_write(11178, 50, 90, True, DAY)
+    assert code(lambda: ledger.allow_write(11178, 48, NEXT_DAY)) == "limit_doby"
+    ledger.data["total"] = 10
+    assert code(lambda: ledger.allow_write(11400, 70, NEXT_DAY)) == "limit_doby"
+
+
+def test_every_code_has_its_translation() -> None:
+    import json
+
+    from tests.pure import COMPONENT
+
+    for path in (COMPONENT / "strings.json", COMPONENT / "translations" / "pl.json"):
+        exceptions = json.loads(path.read_text(encoding="utf-8"))["exceptions"]
+        assert tuple(exceptions) == write.ERROR_CODES
+        assert all("{reason}" in item["message"] for item in exceptions.values())

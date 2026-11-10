@@ -78,11 +78,38 @@ WRITE_EXCEPTION_REASONS: Mapping[int, str] = {
 }
 
 
-class WriteRefused(Exception):
-    """A write the integration does not make - with the reason."""
+# 0.2.1: the fixed error codes (translation_key of the HomeAssistantError)
+# a caller recognises - the reason text may change, the codes do not.
+PNU_NOT_ALLOWED = "pnu_niedozwolony"
+OUT_OF_RANGE = "poza_zakresem"
+ABOVE_OWNER = "powyzej_wlasciciela"
+DAY_LIMIT = "limit_doby"
+MANUAL_MODE = "tryb_reczny"
+NO_CONNECTION = "brak_polaczenia"
+CHECK_FAILED = "odczyt_niezgodny"
+NO_COPY = "brak_kopii"
+CHANGED_BY_HAND = "zmiana_reczna"
+NO_CONTROLLER = "brak_regulatora"
+ERROR_CODES = (
+    PNU_NOT_ALLOWED,
+    OUT_OF_RANGE,
+    ABOVE_OWNER,
+    DAY_LIMIT,
+    MANUAL_MODE,
+    NO_CONNECTION,
+    CHECK_FAILED,
+    NO_COPY,
+    CHANGED_BY_HAND,
+    NO_CONTROLLER,
+)
 
-    def __init__(self, reason: str) -> None:
+
+class WriteRefused(Exception):
+    """A write the integration does not make - with the reason and its code."""
+
+    def __init__(self, reason: str, code: str) -> None:
         self.reason = reason
+        self.code = code
         super().__init__(reason)
 
 
@@ -101,14 +128,17 @@ def to_raw(pnu: int, value: float) -> int:
 
     limit = WRITABLE.get(pnu)
     if limit is None:
-        raise WriteRefused(f"Parametr {pnu} nie jest na liście zapisu — odmowa.")
+        raise WriteRefused(f"Parametr {pnu} nie jest na liście zapisu — odmowa.", PNU_NOT_ALLOWED)
     if not limit.low <= value <= limit.high:
         raise WriteRefused(
-            f"{pnu} ({limit.name}): {value} poza granicami {limit.low}-{limit.high} {limit.unit}."
+            f"{pnu} ({limit.name}): {value} poza granicami {limit.low}-{limit.high} {limit.unit}.",
+            OUT_OF_RANGE,
         )
     steps = value / limit.step
     if abs(steps - round(steps)) > 1e-6:
-        raise WriteRefused(f"{pnu} ({limit.name}): {value} nie jest wielokrotnością {limit.step}.")
+        raise WriteRefused(
+            f"{pnu} ({limit.name}): {value} nie jest wielokrotnością {limit.step}.", OUT_OF_RANGE
+        )
     return round(value * limit.scale)
 
 
@@ -118,12 +148,15 @@ def check_against(pnu: int, raw: int, current: Mapping[int, int]) -> None:
     if pnu == PNU_ROOM_SAVING:
         comfort = current.get(PNU_ROOM_COMFORT)
         if comfort is None or raw > comfort:
-            raise WriteRefused("Zadana oszczędna nie może być wyższa niż komfort (11180).")
+            raise WriteRefused(
+                "Zadana oszczędna nie może być wyższa niż komfort (11180).", OUT_OF_RANGE
+            )
     if pnu == PNU_ROOM_COMFORT:
         saving = current.get(PNU_ROOM_SAVING)
         if saving is not None and saving > raw:
             raise WriteRefused(
-                "Zadana komfort nie może być niższa niż oszczędna (11181) — najpierw obniż 11181."
+                "Zadana komfort nie może być niższa niż oszczędna (11181) — najpierw obniż 11181.",
+                OUT_OF_RANGE,
             )
     if pnu in CURVE:
         index = CURVE.index(pnu)
@@ -132,12 +165,14 @@ def check_against(pnu: int, raw: int, current: Mapping[int, int]) -> None:
         if colder is not None and raw > colder:
             raise WriteRefused(
                 f"Krzywa nie może rosnąć z temperaturą zewnętrzną: {pnu} = {raw} °C, "
-                f"a {CURVE[index - 1]} = {colder} °C. Podnoś krzywą od najzimniejszego punktu."
+                f"a {CURVE[index - 1]} = {colder} °C. Podnoś krzywą od najzimniejszego punktu.",
+                OUT_OF_RANGE,
             )
         if warmer is not None and raw < warmer:
             raise WriteRefused(
                 f"Krzywa nie może rosnąć z temperaturą zewnętrzną: {pnu} = {raw} °C, "
-                f"a {CURVE[index + 1]} = {warmer} °C. Obniżaj krzywą od najcieplejszego punktu."
+                f"a {CURVE[index + 1]} = {warmer} °C. Obniżaj krzywą od najcieplejszego punktu.",
+                OUT_OF_RANGE,
             )
 
 
@@ -187,7 +222,8 @@ class Ledger:
         if raw > owner:
             raise WriteRefused(
                 f"{pnu}: {text(pnu, raw)} powyżej wartości właściciela ({text(pnu, owner)}) — "
-                "integracja nastawę tylko obniża i przywraca."
+                "integracja nastawę tylko obniża i przywraca.",
+                ABOVE_OWNER,
             )
 
     def allow_write(self, pnu: int, raw: int, day: str) -> None:
@@ -197,14 +233,19 @@ class Ledger:
         entry = self._entry(pnu)
         repeat = entry["day"] == day and not entry["check_ok"] and raw == entry["last"]
         if self.data["total"] >= MAX_WRITES_PER_DAY:
-            raise WriteRefused(f"Dzisiejszy limit {MAX_WRITES_PER_DAY} zapisów jest wyczerpany.")
+            raise WriteRefused(
+                f"Dzisiejszy limit {MAX_WRITES_PER_DAY} zapisów jest wyczerpany.", DAY_LIMIT
+            )
         if entry["day"] == day and entry["writes"] >= WRITES_PER_PNU_PER_DAY and not repeat:
-            raise WriteRefused(f"Parametr {pnu} był już dziś zapisany (najwyżej raz na dobę).")
+            raise WriteRefused(
+                f"Parametr {pnu} był już dziś zapisany (najwyżej raz na dobę).", DAY_LIMIT
+            )
         if entry["day"] == day and entry["writes"] > WRITES_PER_PNU_PER_DAY:
-            raise WriteRefused(f"Parametr {pnu}: zapis już raz powtórzony dziś.")
+            raise WriteRefused(f"Parametr {pnu}: zapis już raz powtórzony dziś.", DAY_LIMIT)
         if pnu in ONCE and entry["last"] is not None and not repeat:
             raise WriteRefused(
-                f"Parametr {pnu} ustawia się jednorazowo — najpierw przywróć poprzednią wartość."
+                f"Parametr {pnu} ustawia się jednorazowo — najpierw przywróć poprzednią wartość.",
+                DAY_LIMIT,
             )
 
     def record_write(self, pnu: int, raw: int, before: int, check_ok: bool, day: str) -> None:
@@ -229,11 +270,13 @@ class Ledger:
         wins - the record is closed, the owner's value stays)."""
 
         if pnu not in WRITABLE:
-            raise WriteRefused(f"Parametr {pnu} nie jest na liście zapisu — odmowa.")
+            raise WriteRefused(
+                f"Parametr {pnu} nie jest na liście zapisu — odmowa.", PNU_NOT_ALLOWED
+            )
         entry = self.data["pnu"].get(str(pnu))
         if entry is None or entry["original"] is None:
             raise WriteRefused(
-                f"Integracja nie zmieniała parametru {pnu} — nie ma czego przywracać."
+                f"Integracja nie zmieniała parametru {pnu} — nie ma czego przywracać.", NO_COPY
             )
         if current == entry["original"]:
             self._close(entry)
@@ -242,7 +285,8 @@ class Ledger:
             self._close(entry)
             raise WriteRefused(
                 f"Parametr {pnu} zmieniono na regulatorze po zapisie integracji — "
-                "zostaje wartość ustawiona ręcznie."
+                "zostaje wartość ustawiona ręcznie.",
+                CHANGED_BY_HAND,
             )
         return int(entry["original"])
 

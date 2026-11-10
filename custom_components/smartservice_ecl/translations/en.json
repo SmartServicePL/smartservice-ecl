@@ -266,5 +266,37 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "pnu_niedozwolony": {
+      "message": "Parameter not allowed: {reason}"
+    },
+    "poza_zakresem": {
+      "message": "Value out of range: {reason}"
+    },
+    "powyzej_wlasciciela": {
+      "message": "Above the owner's value: {reason}"
+    },
+    "limit_doby": {
+      "message": "Daily write limit: {reason}"
+    },
+    "tryb_reczny": {
+      "message": "Circuit in manual mode: {reason}"
+    },
+    "brak_polaczenia": {
+      "message": "No connection to the controller: {reason}"
+    },
+    "odczyt_niezgodny": {
+      "message": "Control reading failed: {reason}"
+    },
+    "brak_kopii": {
+      "message": "Nothing to restore: {reason}"
+    },
+    "zmiana_reczna": {
+      "message": "Changed on the controller: {reason}"
+    },
+    "brak_regulatora": {
+      "message": "Controller not found: {reason}"
+    }
   }
 }

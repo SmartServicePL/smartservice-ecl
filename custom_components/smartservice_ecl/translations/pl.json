@@ -266,5 +266,37 @@
         }
       }
     }
+  },
+  "exceptions": {
+    "pnu_niedozwolony": {
+      "message": "Parametr niedozwolony: {reason}"
+    },
+    "poza_zakresem": {
+      "message": "Wartość poza zakresem: {reason}"
+    },
+    "powyzej_wlasciciela": {
+      "message": "Powyżej wartości właściciela: {reason}"
+    },
+    "limit_doby": {
+      "message": "Limit zapisów na dobę: {reason}"
+    },
+    "tryb_reczny": {
+      "message": "Obieg w trybie ręcznym: {reason}"
+    },
+    "brak_polaczenia": {
+      "message": "Brak połączenia z regulatorem: {reason}"
+    },
+    "odczyt_niezgodny": {
+      "message": "Odczyt kontrolny się nie udał: {reason}"
+    },
+    "brak_kopii": {
+      "message": "Nie ma czego przywracać: {reason}"
+    },
+    "zmiana_reczna": {
+      "message": "Zmieniono na regulatorze: {reason}"
+    },
+    "brak_regulatora": {
+      "message": "Nie znaleziono regulatora: {reason}"
+    }
   }
 }

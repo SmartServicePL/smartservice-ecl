@@ -27,6 +27,18 @@ STORAGE_VERSION = 1
 CHECK_DELAY = 3.0
 
 
+def error(reason: str, code: str) -> HomeAssistantError:
+    """0.2.1: the reason as the message, the fixed code as translation_key
+    (in the error of a service call over the WebSocket API)."""
+
+    return HomeAssistantError(
+        reason,
+        translation_domain=DOMAIN,
+        translation_key=code,
+        translation_placeholders={"reason": reason},
+    )
+
+
 def storage_key(entry_id: str) -> str:
     return f"{DOMAIN}.{entry_id}.writes"
 
@@ -123,7 +135,7 @@ class EclCoordinator(DataUpdateCoordinator[EclData]):
                     return self._result(pnu, before, before, written=False)
                 self.ledger.allow_write(pnu, raw, self._day())
             except write.WriteRefused as err:
-                await self._refused(pnu, "write", err.reason, value=value)
+                await self._refused(pnu, "write", err.reason, err.code, value=value)
             read_back = await self._write_and_check(pnu, raw, before, "write")
             ok = read_back == raw
             self.ledger.record_write(pnu, raw, before, ok, self._day())
@@ -149,7 +161,7 @@ class EclCoordinator(DataUpdateCoordinator[EclData]):
                 current = (await self._read_context(pnu))[pnu]
                 target = self.ledger.restore_target(pnu, current)
             except write.WriteRefused as err:
-                await self._refused(pnu, "restore", err.reason)
+                await self._refused(pnu, "restore", err.reason, err.code)
             if target is None:
                 await self._save()
                 return self._result(pnu, current, current, written=False)
@@ -173,20 +185,23 @@ class EclCoordinator(DataUpdateCoordinator[EclData]):
         if self.identity.key != write.APPLICATION_KEY:
             raise write.WriteRefused(
                 f"Zapis tylko dla aplikacji {write.APPLICATION_KEY} "
-                f"(ten regulator: {self.identity.key})."
+                f"(ten regulator: {self.identity.key}).",
+                write.PNU_NOT_ALLOWED,
             )
 
     async def _read_context(self, pnu: int) -> dict[int, int]:
         try:
             current = await self.reader.read({*write.CONTEXT_PNUS, pnu})
         except EclConnectionError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise error(str(err), write.NO_CONNECTION) from err
         except EclModbusError as err:
-            raise HomeAssistantError(err.reason) from err
+            raise error(err.reason, write.NO_CONNECTION) from err
         if current.get(write.PNU_MODE) == 0:
-            raise write.WriteRefused("Obieg 1 jest w trybie ręcznym — zapis wstrzymany.")
+            raise write.WriteRefused(
+                "Obieg 1 jest w trybie ręcznym — zapis wstrzymany.", write.MANUAL_MODE
+            )
         if pnu not in current:
-            raise write.WriteRefused(f"Regulator nie ma parametru {pnu}.")
+            raise write.WriteRefused(f"Regulator nie ma parametru {pnu}.", write.PNU_NOT_ALLOWED)
         return current
 
     async def _write_and_check(self, pnu: int, raw: int, before: int, action: str) -> int:
@@ -194,19 +209,21 @@ class EclCoordinator(DataUpdateCoordinator[EclData]):
             await self.client.write_pnu(pnu, raw)
         except EclModbusError as err:
             reason = write.WRITE_EXCEPTION_REASONS.get(err.code, err.reason)
-            await self._refused(pnu, action, reason, value=raw)
+            # Exception 03: the controller's own range refuses the value.
+            code = write.OUT_OF_RANGE if err.code == 0x03 else write.NO_CONNECTION
+            await self._refused(pnu, action, reason, code, value=raw)
         except EclConnectionError as err:
             # Unknown whether the controller took it: counted as a write whose
             # control reading did not match (a repeat or a restore stays open).
             await self._unsure(pnu, raw, before, action, str(err))
-            raise HomeAssistantError(str(err)) from err
+            raise error(str(err), write.NO_CONNECTION) from err
         await asyncio.sleep(CHECK_DELAY)
         try:
             read_back = (await self.client.read_pnu(pnu))[0]
         except (EclConnectionError, EclModbusError) as err:
             await self._unsure(pnu, raw, before, action, str(err))
-            raise HomeAssistantError(
-                f"Zapis wysłany, ale odczyt kontrolny się nie udał: {err}"
+            raise error(
+                f"Zapis wysłany, ale odczyt kontrolny się nie udał: {err}", write.CHECK_FAILED
             ) from err
         self._slow[pnu] = read_back
         if self.data is not None:
@@ -220,11 +237,15 @@ class EclCoordinator(DataUpdateCoordinator[EclData]):
         self.ledger.note(self._now(), pnu, action, before=before, value=raw, error=error)
         await self._save()
 
-    async def _refused(self, pnu: int, action: str, reason: str, **details: Any) -> None:
-        _LOGGER.warning("Odmowa zapisu %s: %s", pnu, reason)
-        self.ledger.note(self._now(), pnu, f"{action}_refused", reason=reason, **details)
+    async def _refused(
+        self, pnu: int, action: str, reason: str, code: str, **details: Any
+    ) -> None:
+        _LOGGER.warning("Odmowa zapisu %s (%s): %s", pnu, code, reason)
+        self.ledger.note(
+            self._now(), pnu, f"{action}_refused", reason=reason, code=code, **details
+        )
         await self._save()
-        raise HomeAssistantError(reason)
+        raise error(reason, code)
 
     async def _save(self) -> None:
         await self.store.async_save(dict(self.ledger.data))

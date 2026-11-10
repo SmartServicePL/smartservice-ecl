@@ -227,3 +227,50 @@ async def test_diagnostics_hold_the_writes(hass: HomeAssistant, fake: FakeEcl) -
     diagnostics = await async_get_config_entry_diagnostics(hass, entry)
     assert diagnostics["writes"]["pnu"]["11181"]["original"] == 250
     assert diagnostics["writes"]["log"][-1]["action"] == "write"
+
+
+async def test_the_error_codes(hass: HomeAssistant, fake: FakeEcl) -> None:
+    """0.2.1: every refusal carries its fixed code as translation_key, the
+    reason as the message and as the placeholder."""
+
+    await add(hass, fake)
+
+    async def code(service: str, **data: Any) -> str:
+        with pytest.raises(HomeAssistantError) as err:
+            await call(hass, service, **data)
+        assert err.value.translation_domain == DOMAIN
+        assert err.value.translation_placeholders == {"reason": str(err.value)}
+        return err.value.translation_key
+
+    assert await code("zapisz_parametr", pnu=11175, wartosc=1.0) == "pnu_niedozwolony"
+    assert await code("zapisz_parametr", pnu=11180, wartosc=40.5) == "poza_zakresem"
+    assert await code("zapisz_parametr", pnu=11400, wartosc=40) == "poza_zakresem"
+    assert await code("zapisz_parametr", pnu=11180, wartosc=25.5) == "powyzej_wlasciciela"
+    assert await code("przywroc_parametr", pnu=11180) == "brak_kopii"
+    fake.registers[reg(4201)] = 0
+    assert await code("zapisz_parametr", pnu=11181, wartosc=19.0) == "tryb_reczny"
+    fake.registers[reg(4201)] = 1
+    await call(hass, "zapisz_parametr", pnu=11181, wartosc=19.0)
+    assert await code("zapisz_parametr", pnu=11181, wartosc=18.0) == "limit_doby"
+    fake.registers[reg(11181)] = 200
+    assert await code("przywroc_parametr", pnu=11181) == "zmiana_reczna"
+    # The controller refuses the value (exception 03) or fails (04).
+    fake.refused_writes = {reg(11404): 0x03, reg(11403): 0x04}
+    assert await code("zapisz_parametr", pnu=11404, wartosc=38) == "poza_zakresem"
+    assert await code("zapisz_parametr", pnu=11403, wartosc=40) == "brak_polaczenia"
+    fake.refused_writes = {}
+    # The control reading fails: four reads before, the write, then the read.
+    fake.exception_code = 0x04
+    fake.faults = ["", "", "", "", "", "exception"]
+    assert await code("zapisz_parametr", pnu=11405, wartosc=25) == "odczyt_niezgodny"
+    assert fake.registers[reg(11405)] == 25
+
+
+async def test_no_controller_has_a_code(hass: HomeAssistant) -> None:
+    assert await async_setup_component(hass, DOMAIN, {})
+    with pytest.raises(ServiceValidationError) as err:
+        await call(hass, "zapisz_parametr", pnu=11180, wartosc=21.0)
+    assert err.value.translation_key == "brak_polaczenia"
+    with pytest.raises(ServiceValidationError) as err:
+        await call(hass, "przywroc_parametr", pnu=11180, config_entry_id="nie-ma")
+    assert err.value.translation_key == "brak_regulatora"
